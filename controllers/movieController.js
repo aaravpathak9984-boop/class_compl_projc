@@ -31,13 +31,22 @@ exports.getMovies = async (req, res) => {
         .limit(10);
     }
 
+    // Categorize movies for structured section rows
+    const categories = {
+      action: movies.filter(m => m.genre && (m.genre.includes('Action') || m.genre.includes('Thriller'))),
+      drama: movies.filter(m => m.genre && (m.genre.includes('Drama') || m.genre.includes('Crime'))),
+      scifi: movies.filter(m => m.genre && (m.genre.includes('Sci-Fi') || m.genre.includes('Adventure'))),
+      animation: movies.filter(m => m.genre && (m.genre.includes('Animation') || m.genre.includes('Comedy')))
+    };
+
     res.render('movies/list', { 
       title: 'Movies', 
       movies, 
       searchQuery: search || '',
       selectedGenre: genre || '',
       recommended,
-      popular
+      popular,
+      categories
     });
   } catch (err) {
     console.error(err);

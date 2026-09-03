@@ -34,6 +34,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const globalBg = document.getElementById('globalBg');
     let currentIndex = Math.floor(cards.length / 2); // Start at middle card
 
+    // Add smooth transition properties to all coverflow cards
+    cards.forEach(card => {
+      card.style.transition = 'transform 0.85s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.85s ease, filter 0.85s ease';
+    });
+
+    let autoPlayInterval = null;
+
     function updateCoverflow() {
       cards.forEach((card, index) => {
         const offset = index - currentIndex;
@@ -52,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (offset === 0) {
           card.style.filter = 'brightness(1)';
         } else {
-          card.style.filter = 'brightness(0.6)';
+          card.style.filter = 'brightness(0.55)';
         }
       });
 
@@ -65,6 +72,26 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
+    // Continuous auto-changing animation (rotates every 3.2 seconds)
+    function startAutoPlay() {
+      stopAutoPlay();
+      autoPlayInterval = setInterval(() => {
+        currentIndex = (currentIndex + 1) % cards.length;
+        updateCoverflow();
+      }, 3200);
+    }
+
+    function stopAutoPlay() {
+      if (autoPlayInterval) {
+        clearInterval(autoPlayInterval);
+        autoPlayInterval = null;
+      }
+    }
+
+    // Pause on mouse hover, resume on mouse leave
+    coverflowContainer.addEventListener('mouseenter', stopAutoPlay);
+    coverflowContainer.addEventListener('mouseleave', startAutoPlay);
+
     // Handle card clicks
     cards.forEach((card, index) => {
       card.addEventListener('click', (e) => {
@@ -72,6 +99,8 @@ document.addEventListener('DOMContentLoaded', () => {
           e.preventDefault();
           currentIndex = index;
           updateCoverflow();
+          stopAutoPlay();
+          startAutoPlay();
         }
       });
     });
@@ -81,14 +110,19 @@ document.addEventListener('DOMContentLoaded', () => {
       if (e.key === 'ArrowLeft' && currentIndex > 0) {
         currentIndex--;
         updateCoverflow();
+        stopAutoPlay();
+        startAutoPlay();
       } else if (e.key === 'ArrowRight' && currentIndex < cards.length - 1) {
         currentIndex++;
         updateCoverflow();
+        stopAutoPlay();
+        startAutoPlay();
       }
     });
 
-    // Initial render
+    // Initial render & start auto-rotation animation
     updateCoverflow();
+    startAutoPlay();
   }
 
   // Initialize coverflow on page load

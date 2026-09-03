@@ -131,7 +131,7 @@ const kaggleTopMovies = [
     language: 'English',
     duration: 154,
     releaseDate: new Date('1994-10-14'),
-    posterUrl: 'https://image.tmdb.org/t/p/w500/d5iIlFnGhFvlW147HaJnJ2SJqUp.jpg',
+    posterUrl: 'https://image.tmdb.org/t/p/w500/vQWk5YBFWF4bZaofAbv0tShwBvQ.jpg',
     director: 'Quentin Tarantino',
     cast: ['John Travolta', 'Uma Thurman', 'Samuel L. Jackson'],
     rating: 4.8,

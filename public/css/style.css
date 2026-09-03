@@ -455,29 +455,142 @@ select.form-control option { background: var(--bg-base); }
 .coverflow-info h3 { font-size: 1.2rem; font-weight: 600; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #fff; }
 .coverflow-info p { font-size: 0.85rem; color: rgba(255,255,255,0.7); }
 
-/* Horizontal Carousels (Square Cards) */
-.carousel-section { margin-bottom: 40px; }
+/* Horizontal Category Carousels */
+.carousel-section { 
+  margin-bottom: 48px; 
+}
+.category-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding: 0 4px;
+}
+.category-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.category-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.3px;
+  margin: 0;
+}
+.category-count-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 3px 9px;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary);
+  border-radius: 12px;
+}
+
 .movie-carousel {
-  display: flex; gap: 20px; overflow-x: auto; padding: 20px 0;
-  scroll-snap-type: x mandatory; scrollbar-width: none;
+  display: flex; 
+  gap: 20px; 
+  overflow-x: auto; 
+  padding: 12px 4px 24px;
+  scroll-snap-type: x mandatory; 
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
 }
 .movie-carousel::-webkit-scrollbar { display: none; }
-.movie-card-square {
-  flex: 0 0 auto; width: 220px; height: 220px;
-  position: relative; border-radius: var(--radius-md);
-  overflow: hidden; scroll-snap-align: start;
-  transition: transform 0.4s var(--spring);
-  will-change: transform;
+
+.movie-card-portrait {
+  flex: 0 0 190px;
+  width: 190px;
+  height: 280px;
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  scroll-snap-align: start;
+  transition: transform 0.35s cubic-bezier(0.2, 1, 0.3, 1), box-shadow 0.35s ease;
+  background: #14141c;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  text-decoration: none;
+  display: block;
 }
-.movie-card-square:hover { transform: translateY(-8px) scale(1.02); box-shadow: var(--shadow-hover); }
-.movie-card-square .movie-poster { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
-.card-glass-overlay {
-  position: absolute; bottom: 10px; left: 10px; right: 10px;
-  background: var(--glass-bg-high); backdrop-filter: var(--blur-strong); -webkit-backdrop-filter: var(--blur-strong);
-  border: 1px solid var(--glass-border); border-radius: var(--radius-md);
-  padding: 10px 12px; text-align: center;
+.movie-card-portrait:hover { 
+  transform: translateY(-8px) scale(1.03); 
+  box-shadow: 0 20px 35px rgba(0, 0, 0, 0.75), 0 0 25px rgba(10, 132, 255, 0.3); 
+  z-index: 10;
 }
-.card-glass-overlay h3 { font-size: 1rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.movie-card-portrait .movie-poster { 
+  width: 100%; 
+  height: 100%; 
+  object-fit: cover; 
+  border-radius: inherit;
+  transition: transform 0.4s ease;
+}
+.movie-card-portrait:hover .movie-poster {
+  transform: scale(1.05);
+}
+
+.card-top-badges {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 2;
+}
+.card-rating-tag {
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  color: #ffd700;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 7px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.card-duration-tag {
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 6px;
+  border-radius: 6px;
+}
+
+.card-glass-bottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 36px 12px 14px;
+  background: linear-gradient(to top, rgba(8, 8, 12, 0.95) 0%, rgba(8, 8, 12, 0.75) 55%, transparent 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  z-index: 2;
+}
+.card-glass-bottom .movie-title { 
+  font-size: 0.95rem; 
+  font-weight: 700; 
+  color: #ffffff;
+  white-space: nowrap; 
+  overflow: hidden; 
+  text-overflow: ellipsis; 
+  margin: 0;
+}
+.card-glass-bottom .movie-genre-text {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 /* ==========================================================================
    Movie Detail Page (Moonlight Inspiration Showcase)

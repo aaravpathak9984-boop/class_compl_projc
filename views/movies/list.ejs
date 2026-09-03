@@ -4,7 +4,7 @@
     <input type="text" name="search" id="movieSearchInput" placeholder="Search movies..." value="<%= searchQuery %>" class="form-control-dock" autocomplete="off">
     <select name="genre" id="movieGenreSelect" class="form-control-dock genre-select">
       <option value="">All Genres</option>
-      <% const genres = ['Action', 'Comedy', 'Drama', 'Sci-Fi', 'Horror', 'Romance', 'Thriller', 'Animation', 'Documentary']; %>
+      <% const genres = ['Action', 'Comedy', 'Drama', 'Sci-Fi', 'Horror', 'Romance', 'Thriller', 'Animation', 'Crime', 'Adventure']; %>
       <% genres.forEach(g => { %>
         <option value="<%= g %>" <%= selectedGenre === g ? 'selected' : '' %>><%= g %></option>
       <% }) %>
@@ -18,7 +18,8 @@
 
 <div id="moviesMainDisplay">
 
-<% if (popular && popular.length > 0) { %>
+<% if (!searchQuery && !selectedGenre && popular && popular.length > 0) { %>
+  <!-- 3D Cover Flow Carousel with Continuous Auto-Rotation Animation -->
   <div class="coverflow-section">
     <h2 class="section-title text-center mb-4">Popular Right Now</h2>
     <div class="coverflow-container" id="popularCoverflow">
@@ -38,42 +39,216 @@
 <% } %>
 
 <div class="movie-sections">
-  <% if (currentUser && recommended && recommended.length > 0) { %>
-    <div class="carousel-section">
-      <h2 class="section-title">Recommended for You</h2>
-      <div class="movie-carousel">
-        <% recommended.forEach(movie => { %>
-          <div class="movie-card-square">
-            <a href="/movies/<%= movie._id %>">
-              <img src="<%= movie.posterUrl || '/images/default-poster.jpg' %>" alt="<%= movie.title %>" class="movie-poster">
-              <div class="card-glass-overlay">
+  <% if (searchQuery || selectedGenre) { %>
+    <!-- Filtered Search Results View -->
+    <div class="carousel-section mb-5 pb-5">
+      <div class="category-header">
+        <div class="category-title-wrap">
+          <h2 class="category-title">Search Results</h2>
+          <span class="category-count-badge"><%= movies.length %> movies</span>
+        </div>
+      </div>
+      <% if (movies.length > 0) { %>
+        <div class="movie-carousel">
+          <% movies.forEach(movie => { %>
+            <a href="/movies/<%= movie._id %>" class="movie-card-portrait">
+              <div class="card-top-badges">
+                <span class="card-rating-tag">★ <%= movie.rating ? movie.rating.toFixed(1) : '4.5' %></span>
+                <% if (movie.duration) { %>
+                  <span class="card-duration-tag"><%= movie.duration %>m</span>
+                <% } %>
+              </div>
+              <img src="<%= movie.posterUrl || '/images/default-poster.jpg' %>" alt="<%= movie.title %>" class="movie-poster" loading="lazy">
+              <div class="card-glass-bottom">
                 <h3 class="movie-title"><%= movie.title %></h3>
+                <span class="movie-genre-text"><%= movie.genre ? movie.genre.slice(0, 2).join(' • ') : '' %></span>
               </div>
             </a>
-          </div>
-        <% }) %>
-      </div>
+          <% }) %>
+        </div>
+      <% } else { %>
+        <p class="text-muted p-4 glass-panel-soft text-center mx-auto" style="max-width:400px;">No movies found matching your search.</p>
+      <% } %>
     </div>
-  <% } %>
 
-  <div class="carousel-section mb-5 pb-5">
-    <h2 class="section-title">All Movies</h2>
-    <% if (movies.length > 0) { %>
-      <div class="movie-carousel">
-        <% movies.forEach(movie => { %>
-          <div class="movie-card-square">
-            <a href="/movies/<%= movie._id %>">
-              <img src="<%= movie.posterUrl || '/images/default-poster.jpg' %>" alt="<%= movie.title %>" class="movie-poster">
-              <div class="card-glass-overlay">
+  <% } else { %>
+
+    <!-- 1. Personalized Recommendations (Based on selected categories) -->
+    <% if (currentUser && recommended && recommended.length > 0) { %>
+      <div class="carousel-section">
+        <div class="category-header">
+          <div class="category-title-wrap">
+            <h2 class="category-title">✨ Recommended for You</h2>
+            <span class="category-count-badge">Based on your tastes</span>
+          </div>
+        </div>
+        <div class="movie-carousel">
+          <% recommended.forEach(movie => { %>
+            <a href="/movies/<%= movie._id %>" class="movie-card-portrait">
+              <div class="card-top-badges">
+                <span class="card-rating-tag">★ <%= movie.rating ? movie.rating.toFixed(1) : '4.5' %></span>
+                <% if (movie.duration) { %>
+                  <span class="card-duration-tag"><%= movie.duration %>m</span>
+                <% } %>
+              </div>
+              <img src="<%= movie.posterUrl || '/images/default-poster.jpg' %>" alt="<%= movie.title %>" class="movie-poster" loading="lazy">
+              <div class="card-glass-bottom">
                 <h3 class="movie-title"><%= movie.title %></h3>
+                <span class="movie-genre-text"><%= movie.genre ? movie.genre.slice(0, 2).join(' • ') : '' %></span>
               </div>
             </a>
-          </div>
-        <% }) %>
+          <% }) %>
+        </div>
       </div>
-    <% } else { %>
-      <p class="text-muted p-4 glass-panel-soft text-center mx-auto" style="max-width:400px;">No movies found.</p>
     <% } %>
-  </div>
+
+    <!-- 2. Action & Thrillers Category -->
+    <% if (categories && categories.action && categories.action.length > 0) { %>
+      <div class="carousel-section">
+        <div class="category-header">
+          <div class="category-title-wrap">
+            <h2 class="category-title">💥 Action & Thrillers</h2>
+            <span class="category-count-badge"><%= categories.action.length %> titles</span>
+          </div>
+        </div>
+        <div class="movie-carousel">
+          <% categories.action.forEach(movie => { %>
+            <a href="/movies/<%= movie._id %>" class="movie-card-portrait">
+              <div class="card-top-badges">
+                <span class="card-rating-tag">★ <%= movie.rating ? movie.rating.toFixed(1) : '4.5' %></span>
+                <% if (movie.duration) { %>
+                  <span class="card-duration-tag"><%= movie.duration %>m</span>
+                <% } %>
+              </div>
+              <img src="<%= movie.posterUrl || '/images/default-poster.jpg' %>" alt="<%= movie.title %>" class="movie-poster" loading="lazy">
+              <div class="card-glass-bottom">
+                <h3 class="movie-title"><%= movie.title %></h3>
+                <span class="movie-genre-text"><%= movie.genre ? movie.genre.slice(0, 2).join(' • ') : '' %></span>
+              </div>
+            </a>
+          <% }) %>
+        </div>
+      </div>
+    <% } %>
+
+    <!-- 3. Award-Winning Drama & Crime Category -->
+    <% if (categories && categories.drama && categories.drama.length > 0) { %>
+      <div class="carousel-section">
+        <div class="category-header">
+          <div class="category-title-wrap">
+            <h2 class="category-title">🎭 Award-Winning Drama & Crime</h2>
+            <span class="category-count-badge"><%= categories.drama.length %> titles</span>
+          </div>
+        </div>
+        <div class="movie-carousel">
+          <% categories.drama.forEach(movie => { %>
+            <a href="/movies/<%= movie._id %>" class="movie-card-portrait">
+              <div class="card-top-badges">
+                <span class="card-rating-tag">★ <%= movie.rating ? movie.rating.toFixed(1) : '4.5' %></span>
+                <% if (movie.duration) { %>
+                  <span class="card-duration-tag"><%= movie.duration %>m</span>
+                <% } %>
+              </div>
+              <img src="<%= movie.posterUrl || '/images/default-poster.jpg' %>" alt="<%= movie.title %>" class="movie-poster" loading="lazy">
+              <div class="card-glass-bottom">
+                <h3 class="movie-title"><%= movie.title %></h3>
+                <span class="movie-genre-text"><%= movie.genre ? movie.genre.slice(0, 2).join(' • ') : '' %></span>
+              </div>
+            </a>
+          <% }) %>
+        </div>
+      </div>
+    <% } %>
+
+    <!-- 4. Sci-Fi & Cosmic Adventures Category -->
+    <% if (categories && categories.scifi && categories.scifi.length > 0) { %>
+      <div class="carousel-section">
+        <div class="category-header">
+          <div class="category-title-wrap">
+            <h2 class="category-title">🚀 Sci-Fi & Cosmic Adventures</h2>
+            <span class="category-count-badge"><%= categories.scifi.length %> titles</span>
+          </div>
+        </div>
+        <div class="movie-carousel">
+          <% categories.scifi.forEach(movie => { %>
+            <a href="/movies/<%= movie._id %>" class="movie-card-portrait">
+              <div class="card-top-badges">
+                <span class="card-rating-tag">★ <%= movie.rating ? movie.rating.toFixed(1) : '4.5' %></span>
+                <% if (movie.duration) { %>
+                  <span class="card-duration-tag"><%= movie.duration %>m</span>
+                <% } %>
+              </div>
+              <img src="<%= movie.posterUrl || '/images/default-poster.jpg' %>" alt="<%= movie.title %>" class="movie-poster" loading="lazy">
+              <div class="card-glass-bottom">
+                <h3 class="movie-title"><%= movie.title %></h3>
+                <span class="movie-genre-text"><%= movie.genre ? movie.genre.slice(0, 2).join(' • ') : '' %></span>
+              </div>
+            </a>
+          <% }) %>
+        </div>
+      </div>
+    <% } %>
+
+    <!-- 5. Animation & Family Favorites Category -->
+    <% if (categories && categories.animation && categories.animation.length > 0) { %>
+      <div class="carousel-section">
+        <div class="category-header">
+          <div class="category-title-wrap">
+            <h2 class="category-title">✨ Animation & Family Favorites</h2>
+            <span class="category-count-badge"><%= categories.animation.length %> titles</span>
+          </div>
+        </div>
+        <div class="movie-carousel">
+          <% categories.animation.forEach(movie => { %>
+            <a href="/movies/<%= movie._id %>" class="movie-card-portrait">
+              <div class="card-top-badges">
+                <span class="card-rating-tag">★ <%= movie.rating ? movie.rating.toFixed(1) : '4.5' %></span>
+                <% if (movie.duration) { %>
+                  <span class="card-duration-tag"><%= movie.duration %>m</span>
+                <% } %>
+              </div>
+              <img src="<%= movie.posterUrl || '/images/default-poster.jpg' %>" alt="<%= movie.title %>" class="movie-poster" loading="lazy">
+              <div class="card-glass-bottom">
+                <h3 class="movie-title"><%= movie.title %></h3>
+                <span class="movie-genre-text"><%= movie.genre ? movie.genre.slice(0, 2).join(' • ') : '' %></span>
+              </div>
+            </a>
+          <% }) %>
+        </div>
+      </div>
+    <% } %>
+
+    <!-- 6. Complete Film Collection -->
+    <div class="carousel-section mb-5 pb-5">
+      <div class="category-header">
+        <div class="category-title-wrap">
+          <h2 class="category-title">🎬 All Movies</h2>
+          <span class="category-count-badge"><%= movies.length %> total</span>
+        </div>
+      </div>
+      <% if (movies.length > 0) { %>
+        <div class="movie-carousel">
+          <% movies.forEach(movie => { %>
+            <a href="/movies/<%= movie._id %>" class="movie-card-portrait">
+              <div class="card-top-badges">
+                <span class="card-rating-tag">★ <%= movie.rating ? movie.rating.toFixed(1) : '4.5' %></span>
+                <% if (movie.duration) { %>
+                  <span class="card-duration-tag"><%= movie.duration %>m</span>
+                <% } %>
+              </div>
+              <img src="<%= movie.posterUrl || '/images/default-poster.jpg' %>" alt="<%= movie.title %>" class="movie-poster" loading="lazy">
+              <div class="card-glass-bottom">
+                <h3 class="movie-title"><%= movie.title %></h3>
+                <span class="movie-genre-text"><%= movie.genre ? movie.genre.slice(0, 2).join(' • ') : '' %></span>
+              </div>
+            </a>
+          <% }) %>
+        </div>
+      <% } else { %>
+        <p class="text-muted p-4 glass-panel-soft text-center mx-auto" style="max-width:400px;">No movies found.</p>
+      <% } %>
+    </div>
+
+  <% } %>
 </div>
 </div>
