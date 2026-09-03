@@ -41,27 +41,29 @@ if (process.env.NODE_ENV !== 'production') {
 // Session Setup
 app.set('trust proxy', 1);
 
-let sessionMongoUri = process.env.MONGO_URI;
-if (process.env.NODE_ENV !== 'production' && !sessionMongoUri) {
-  sessionMongoUri = 'mongodb://127.0.0.1:27017/movie_booking_system';
+const sessionMongoUri = process.env.MONGO_URI || (process.env.NODE_ENV !== 'production' ? 'mongodb://127.0.0.1:27017/movie_booking_system' : null);
+
+const sessionConfig = {
+  secret: process.env.SESSION_SECRET || 'secret',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+    maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+    sameSite: 'lax',
+  }
+};
+
+if (sessionMongoUri) {
+  sessionConfig.store = MongoStore.create({
+    mongoUrl: sessionMongoUri,
+  });
+} else {
+  console.warn('WARNING: MONGO_URI is missing. Session will fall back to MemoryStore.');
 }
 
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || 'secret',
-    resave: false,
-    saveUninitialized: false,
-    store: MongoStore.create({
-      mongoUrl: sessionMongoUri,
-    }),
-    cookie: {
-      secure: process.env.NODE_ENV === 'production',
-      httpOnly: true,
-      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
-      sameSite: 'lax',
-    }
-  })
-);
+app.use(session(sessionConfig));
 
 // Flash Messages
 app.use(flash());
@@ -97,6 +99,6 @@ app.use((req, res, next) => {
 
 // Start Server
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
 });
