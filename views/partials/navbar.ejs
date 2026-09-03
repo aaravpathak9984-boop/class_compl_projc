@@ -1,12 +1,11 @@
 <!-- ==========================================================================
      Top Navigation Bar (views/partials/navbar.ejs)
-     Sticky, glassmorphic top header with Cineplex logo, navigation links,
-     user profile badge, and a prominent top-right Logout button.
+     Minimalist header: Cineplex Brand on left, only Login/Signup/Logout on top right.
      ========================================================================== -->
 <header class="top-navbar glass-panel">
   <div class="top-navbar-container">
-    <!-- Brand / Logo -->
-    <a href="/movies" class="top-nav-brand">
+    <!-- Brand / Logo (Left) -->
+    <a href="/movies" class="top-nav-brand" title="Cineplex Home">
       <div class="brand-icon">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
           <circle cx="12" cy="12" r="10"></circle>
@@ -16,67 +15,51 @@
       <span class="brand-text">CINEPLEX</span>
     </a>
 
-    <!-- Center Navigation Links -->
-    <nav class="top-nav-links">
-      <a href="/movies" class="top-nav-link">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-1">
-          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-        </svg>
-        Movies
-      </a>
-
+    <!-- Top Right Corner Section (ONLY Login / Signup / Logout & Profile) -->
+    <div class="top-nav-right">
       <% if (currentUser) { %>
-        <a href="/bookings/my" class="top-nav-link">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-1">
+        <!-- My Bookings Link -->
+        <a href="/bookings/my" class="top-nav-link" title="My Bookings">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-1">
             <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
             <line x1="16" y1="2" x2="16" y2="6"></line>
             <line x1="8" y1="2" x2="8" y2="6"></line>
             <line x1="3" y1="10" x2="21" y2="10"></line>
           </svg>
-          My Bookings
+          <span>Bookings</span>
         </a>
 
         <% if (currentUser.role === 'admin') { %>
-          <a href="/admin/dashboard" class="top-nav-link admin-nav-link">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-1">
+          <a href="/admin/dashboard" class="top-nav-link admin-nav-link" title="Admin Panel">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-1">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
             </svg>
-            Admin Panel
+            <span>Admin</span>
           </a>
         <% } %>
-      <% } %>
-    </nav>
 
-    <!-- Top Right Corner Section -->
-    <div class="top-nav-right">
-      <% if (currentUser) { %>
-        <!-- User Profile Tag -->
+        <!-- User Name Pill -->
         <div class="nav-user-tag">
           <div class="nav-user-avatar">
             <%= currentUser.name.charAt(0).toUpperCase() %>
           </div>
-          <div class="nav-user-info">
-            <span class="nav-user-name"><%= currentUser.name %></span>
-            <% if (currentUser.role === 'admin') { %>
-              <span class="nav-admin-badge">Admin</span>
-            <% } %>
-          </div>
+          <span class="nav-user-name"><%= currentUser.name %></span>
         </div>
 
-        <!-- Prominent Top-Right Logout Button -->
+        <!-- Top-Right Logout Button -->
         <form action="/auth/logout" method="POST" class="nav-logout-form">
-          <button type="submit" class="btn-nav-logout" title="Sign out of Cineplex">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-1">
+          <button type="submit" class="btn-nav-logout" title="Log out">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-1">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
               <polyline points="16 17 21 12 16 7"></polyline>
               <line x1="21" y1="12" x2="9" y2="12"></line>
             </svg>
-            <span>Log Out</span>
+            <span>Logout</span>
           </button>
         </form>
 
       <% } else { %>
-        <!-- Guest Login / Register in Top Right -->
+        <!-- Guest: Only Log In & Sign Up on Top Right -->
         <a href="/auth/login" class="btn-nav-login">Log In</a>
         <a href="/auth/register" class="btn-nav-register">Sign Up</a>
       <% } %>
