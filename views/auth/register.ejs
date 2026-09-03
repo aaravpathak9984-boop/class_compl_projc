@@ -1,83 +1,50 @@
 <!-- ==========================================================================
-     Clean Minimalist Register View (views/auth/register.ejs)
+     Simple, Clean Register View (views/auth/register.ejs)
      ========================================================================== -->
 <div class="auth-wrapper">
   <div class="auth-card">
     <div class="auth-header">
-      <h1 class="auth-title">Create account</h1>
-      <p class="auth-subtitle">Enter your details to book movie tickets</p>
+      <h1 class="auth-title">Create Account</h1>
+      <p class="auth-subtitle">Sign up to start booking movie tickets</p>
     </div>
 
     <form action="/auth/register" method="POST" id="registerForm" class="auth-form">
       <!-- Full Name -->
       <div class="field-group">
-        <label for="name" class="field-label">Full name</label>
-        <input type="text" id="name" name="name" required class="clean-input" placeholder="Aarav Pathak" autocomplete="name">
+        <label for="name" class="field-label">Full Name</label>
+        <input type="text" id="name" name="name" required class="clean-input" placeholder="e.g. Aarav Pathak" autocomplete="name">
       </div>
 
       <!-- Email -->
       <div class="field-group">
-        <label for="email" class="field-label">Email address</label>
-        <input type="email" id="email" name="email" required class="clean-input" placeholder="aarav@example.com" autocomplete="email">
+        <label for="email" class="field-label">Email Address</label>
+        <input type="email" id="email" name="email" required class="clean-input" placeholder="you@example.com" autocomplete="email">
       </div>
 
       <!-- Password -->
       <div class="field-group">
-        <div class="field-header">
-          <label for="password" class="field-label">Password</label>
-          <button type="button" class="btn-suggest-link" id="suggestPasswordBtn">
-            Auto-generate strong
-          </button>
-        </div>
-
+        <label for="password" class="field-label">Password</label>
         <div class="input-with-action">
-          <input type="password" id="password" name="password" required class="clean-input" placeholder="Min. 8 characters" autocomplete="new-password">
-          <button type="button" class="input-action-btn" id="togglePasswordBtn" title="Toggle visibility">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <input type="password" id="password" name="password" required class="clean-input" placeholder="At least 6 characters" autocomplete="new-password">
+          <button type="button" class="input-action-btn" id="togglePasswordBtn" title="Show/hide password">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
               <circle cx="12" cy="12" r="3"></circle>
             </svg>
           </button>
         </div>
-
-        <!-- Minimal Strength Bar -->
-        <div class="minimal-strength-meter">
-          <div class="strength-line" id="strengthBar"></div>
-        </div>
-
-        <!-- Clean Minimal Requirement Chips -->
-        <div class="minimal-rules-row">
-          <span class="rule-chip" id="ruleLength">8+ chars</span>
-          <span class="rule-chip" id="ruleUpper">Uppercase</span>
-          <span class="rule-chip" id="ruleNumber">Number</span>
-          <span class="rule-chip" id="ruleSpecial">Symbol</span>
-        </div>
       </div>
 
       <!-- Confirm Password -->
       <div class="field-group">
-        <label for="confirmPassword" class="field-label">Confirm password</label>
-        <input type="password" id="confirmPassword" name="confirmPassword" required class="clean-input" placeholder="Re-enter password" autocomplete="new-password">
+        <label for="confirmPassword" class="field-label">Confirm Password</label>
+        <input type="password" id="confirmPassword" name="confirmPassword" required class="clean-input" placeholder="Re-type your password" autocomplete="new-password">
         <span id="matchStatus" class="field-hint"></span>
-      </div>
-
-      <!-- Favorite Genres Selectable Chips -->
-      <div class="field-group">
-        <label class="field-label">Favorite genres <span class="text-muted" style="font-weight: normal;">(optional)</span></label>
-        <div class="genre-chips-grid">
-          <% const genres = ['Action', 'Sci-Fi', 'Drama', 'Comedy', 'Thriller', 'Horror', 'Animation']; %>
-          <% genres.forEach(genre => { %>
-            <label class="genre-chip-item">
-              <input type="checkbox" name="favoriteGenres" value="<%= genre %>">
-              <span class="chip-label"><%= genre %></span>
-            </label>
-          <% }) %>
-        </div>
       </div>
 
       <!-- Submit Button -->
       <button type="submit" class="btn-clean-primary" id="submitBtn">
-        Create account
+        Create Account
       </button>
     </form>
 
@@ -93,15 +60,9 @@
     const passwordInput = document.getElementById('password');
     const confirmInput = document.getElementById('confirmPassword');
     const toggleBtn = document.getElementById('togglePasswordBtn');
-    const suggestBtn = document.getElementById('suggestPasswordBtn');
-    const strengthBar = document.getElementById('strengthBar');
     const matchStatus = document.getElementById('matchStatus');
 
-    const ruleLength = document.getElementById('ruleLength');
-    const ruleUpper = document.getElementById('ruleUpper');
-    const ruleNumber = document.getElementById('ruleNumber');
-    const ruleSpecial = document.getElementById('ruleSpecial');
-
+    // Toggle password visibility
     if (toggleBtn) {
       toggleBtn.addEventListener('click', () => {
         const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
@@ -110,106 +71,26 @@
       });
     }
 
-    function checkStrength(pwd) {
-      let score = 0;
-      const hasLength = pwd.length >= 8;
-      const hasUpper = /[A-Z]/.test(pwd);
-      const hasNumber = /[0-9]/.test(pwd);
-      const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pwd);
-
-      updateChip(ruleLength, hasLength);
-      if (hasLength) score++;
-
-      updateChip(ruleUpper, hasUpper);
-      if (hasUpper) score++;
-
-      updateChip(ruleNumber, hasNumber);
-      if (hasNumber) score++;
-
-      updateChip(ruleSpecial, hasSpecial);
-      if (hasSpecial) score++;
-
-      if (pwd.length === 0) {
-        strengthBar.style.width = '0%';
-        strengthBar.style.backgroundColor = 'transparent';
-      } else if (score <= 1) {
-        strengthBar.style.width = '25%';
-        strengthBar.style.backgroundColor = '#ff453a';
-      } else if (score === 2) {
-        strengthBar.style.width = '50%';
-        strengthBar.style.backgroundColor = '#ff9f0a';
-      } else if (score === 3) {
-        strengthBar.style.width = '75%';
-        strengthBar.style.backgroundColor = '#0a84ff';
-      } else {
-        strengthBar.style.width = '100%';
-        strengthBar.style.backgroundColor = '#30d158';
-      }
-
-      checkMatch();
-    }
-
-    function updateChip(el, ok) {
-      if (!el) return;
-      if (ok) {
-        el.classList.add('chip-valid');
-      } else {
-        el.classList.remove('chip-valid');
-      }
-    }
-
+    // Check passwords match
     function checkMatch() {
       if (!confirmInput.value) {
         matchStatus.innerText = '';
         return;
       }
       if (passwordInput.value === confirmInput.value) {
-        matchStatus.innerText = 'Passwords match';
+        matchStatus.innerText = '✓ Passwords match';
         matchStatus.style.color = '#30d158';
       } else {
-        matchStatus.innerText = 'Passwords do not match';
+        matchStatus.innerText = '✕ Passwords do not match';
         matchStatus.style.color = '#ff453a';
       }
     }
 
-    if (passwordInput) {
-      passwordInput.addEventListener('input', () => checkStrength(passwordInput.value));
-    }
     if (confirmInput) {
       confirmInput.addEventListener('input', checkMatch);
     }
-
-    if (suggestBtn) {
-      suggestBtn.addEventListener('click', () => {
-        const uppercase = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
-        const lowercase = 'abcdefghijkmnopqrstuvwxyz';
-        const numbers = '23456789';
-        const symbols = '!@#$%^&*';
-        const all = uppercase + lowercase + numbers + symbols;
-
-        let res = '';
-        res += uppercase[Math.floor(Math.random() * uppercase.length)];
-        res += lowercase[Math.floor(Math.random() * lowercase.length)];
-        res += numbers[Math.floor(Math.random() * numbers.length)];
-        res += symbols[Math.floor(Math.random() * symbols.length)];
-        for (let i = 4; i < 12; i++) {
-          res += all[Math.floor(Math.random() * all.length)];
-        }
-        res = res.split('').sort(() => 0.5 - Math.random()).join('');
-
-        passwordInput.value = res;
-        confirmInput.value = res;
-        passwordInput.setAttribute('type', 'text');
-        confirmInput.setAttribute('type', 'text');
-        checkStrength(res);
-
-        navigator.clipboard.writeText(res).then(() => {
-          suggestBtn.innerText = 'Copied!';
-          setTimeout(() => {
-            suggestBtn.innerText = 'Auto-generate strong';
-          }, 2000);
-        });
-      });
+    if (passwordInput) {
+      passwordInput.addEventListener('input', checkMatch);
     }
   });
 </script>

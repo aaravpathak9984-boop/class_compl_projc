@@ -42,24 +42,9 @@ exports.postRegister = async (req, res) => {
     return res.redirect('/auth/register');
   }
 
-  // 2. Custom Strong Password Validation Recommendations
-  if (!password || password.length < 8) {
-    req.flash('error_msg', 'Weak Password: Must be at least 8 characters long.');
-    return res.redirect('/auth/register');
-  }
-
-  if (!/[A-Z]/.test(password)) {
-    req.flash('error_msg', 'Weak Password: Must contain at least one uppercase letter (A-Z).');
-    return res.redirect('/auth/register');
-  }
-
-  if (!/[0-9]/.test(password)) {
-    req.flash('error_msg', 'Weak Password: Must contain at least one number (0-9).');
-    return res.redirect('/auth/register');
-  }
-
-  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
-    req.flash('error_msg', 'Weak Password: Must contain at least one special character (!@#$%^&*...).');
+  // 2. Validate password length (simple & clean)
+  if (!password || password.length < 6) {
+    req.flash('error_msg', 'Password must be at least 6 characters long.');
     return res.redirect('/auth/register');
   }
 
