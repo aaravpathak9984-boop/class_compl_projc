@@ -15,7 +15,7 @@ const User = require('../models/User');
  * GET /auth/register
  */
 exports.getRegister = (req, res) => {
-  res.render('auth/register', { title: 'Register - Cineplex' });
+  res.render('auth/register', { title: 'Register' });
 };
 
 /**
@@ -119,7 +119,7 @@ exports.postRegister = async (req, res) => {
  * GET /auth/login
  */
 exports.getLogin = (req, res) => {
-  res.render('auth/login', { title: 'Login - Cineplex' });
+  res.render('auth/login', { title: 'Login' });
 };
 
 /**
