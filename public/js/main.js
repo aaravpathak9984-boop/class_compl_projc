@@ -1,6 +1,16 @@
+/**
+ * ============================================================================
+ * Cineplex Client Application (public/js/main.js)
+ * ============================================================================
+ * Handles flash toasts auto-dismissal, 3D coverflow carousel interaction,
+ * and high-performance debounced live movie search with partial regex matching.
+ */
+
 document.addEventListener('DOMContentLoaded', () => {
   
-  // Auto-hide flash messages after 5 seconds
+  // --------------------------------------------------------------------------
+  // 1. Flash Toast Messages Auto-Dismissal
+  // --------------------------------------------------------------------------
   const flashMessages = document.querySelectorAll('.flash-container .alert');
   if (flashMessages.length > 0) {
     setTimeout(() => {
@@ -10,24 +20,28 @@ document.addEventListener('DOMContentLoaded', () => {
         msg.style.transform = 'translateY(-20px)';
         setTimeout(() => msg.remove(), 500);
       });
-    }, 5000);
+    }, 4500);
   }
 
-  // Cover Flow Carousel Logic
-  const coverflowContainer = document.getElementById('popularCoverflow');
-  if (coverflowContainer) {
+  // --------------------------------------------------------------------------
+  // 2. Cover Flow Carousel Logic
+  // --------------------------------------------------------------------------
+  function initCoverflow() {
+    const coverflowContainer = document.getElementById('popularCoverflow');
+    if (!coverflowContainer) return;
+
     const cards = Array.from(coverflowContainer.querySelectorAll('.coverflow-card'));
     const globalBg = document.getElementById('globalBg');
-    let currentIndex = Math.floor(cards.length / 2); // Start at the middle
+    let currentIndex = Math.floor(cards.length / 2); // Start at middle card
 
     function updateCoverflow() {
       cards.forEach((card, index) => {
         const offset = index - currentIndex;
         
-        // Calculate 3D transforms
-        const translateX = offset * 180; // Distance between cards
-        const translateZ = Math.abs(offset) * -200; // Push back side cards
-        const rotateY = offset * -20; // Rotate side cards towards center
+        // 3D perspective transforms
+        const translateX = offset * 180;
+        const translateZ = Math.abs(offset) * -200;
+        const rotateY = offset * -20;
         const opacity = 1 - Math.abs(offset) * 0.15;
         const zIndex = 100 - Math.abs(offset);
 
@@ -35,7 +49,6 @@ document.addEventListener('DOMContentLoaded', () => {
         card.style.zIndex = zIndex;
         card.style.opacity = Math.max(opacity, 0);
 
-        // Dim side cards slightly via filter
         if (offset === 0) {
           card.style.filter = 'brightness(1)';
         } else {
@@ -43,27 +56,27 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
 
-      // Update global background
+      // Update global background to match active card
       if (globalBg && cards[currentIndex]) {
         const bgUrl = cards[currentIndex].dataset.bg;
-        globalBg.style.backgroundImage = `url('${bgUrl}')`;
+        if (bgUrl) {
+          globalBg.style.backgroundImage = `url('${bgUrl}')`;
+        }
       }
     }
 
-    // Handle clicks
+    // Handle card clicks
     cards.forEach((card, index) => {
       card.addEventListener('click', (e) => {
         if (index !== currentIndex) {
-          // If clicking a side card, bring it to center instead of navigating
           e.preventDefault();
           currentIndex = index;
           updateCoverflow();
         }
-        // If clicking the center card, let the <a> tag navigate normally
       });
     });
 
-    // Keyboard navigation
+    // Keyboard arrow navigation
     document.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowLeft' && currentIndex > 0) {
         currentIndex--;
@@ -76,16 +89,113 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initial render
     updateCoverflow();
-  } else {
-    // If we're not on the list page but have a global background (e.g., detail page)
-    const heroBg = document.querySelector('.hero-bg');
-    const globalBg = document.getElementById('globalBg');
-    if (heroBg && globalBg) {
-      // The detail page handles its own background, but we can sync the global bg just in case
-      const match = heroBg.style.backgroundImage.match(/url\(['"]?(.*?)['"]?\)/);
-      if (match && match[1]) {
-        globalBg.style.backgroundImage = `url('${match[1]}')`;
+  }
+
+  // Initialize coverflow on page load
+  initCoverflow();
+
+  // --------------------------------------------------------------------------
+  // 3. Debounced Live Movie Search
+  // --------------------------------------------------------------------------
+  const searchInput = document.getElementById('movieSearchInput');
+  const genreSelect = document.getElementById('movieGenreSelect');
+  const searchForm = document.getElementById('movieSearchForm');
+  const displayArea = document.getElementById('moviesMainDisplay');
+
+  if (searchInput && displayArea) {
+    let activeController = null;
+
+    /**
+     * Reusable Debounce Utility
+     * Delays execution until 'delay' milliseconds have passed without any new events
+     */
+    function debounce(callback, delay = 350) {
+      let timer;
+      return function (...args) {
+        clearTimeout(timer);
+        timer = setTimeout(() => callback.apply(this, args), delay);
+      };
+    }
+
+    /**
+     * Executes the live fetch request with AbortController to prevent race conditions
+     */
+    async function executeLiveSearch() {
+      const searchVal = searchInput.value.trim();
+      const genreVal = genreSelect ? genreSelect.value : '';
+
+      const params = new URLSearchParams();
+      if (searchVal) params.set('search', searchVal);
+      if (genreVal) params.set('genre', genreVal);
+
+      const targetUrl = `/movies?${params.toString()}`;
+
+      // Abort previous in-flight request if user kept typing
+      if (activeController) {
+        activeController.abort();
       }
+      activeController = new AbortController();
+
+      // Subtle loading transition
+      displayArea.style.opacity = '0.4';
+      displayArea.style.transition = 'opacity 0.2s ease';
+
+      try {
+        const response = await fetch(targetUrl, {
+          headers: { 'X-Requested-With': 'XMLHttpRequest' },
+          signal: activeController.signal
+        });
+
+        if (response.ok) {
+          const html = await response.text();
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(html, 'text/html');
+          const newContent = doc.getElementById('moviesMainDisplay');
+
+          if (newContent) {
+            displayArea.innerHTML = newContent.innerHTML;
+            // Update browser URL without full page reload
+            window.history.replaceState({}, '', targetUrl);
+            // Re-bind 3D coverflow carousel
+            initCoverflow();
+          }
+        }
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.error('Search request error:', err);
+        }
+      } finally {
+        displayArea.style.opacity = '1';
+      }
+    }
+
+    // Debounce typing searches by 350 milliseconds
+    const debouncedSearch = debounce(executeLiveSearch, 350);
+    searchInput.addEventListener('input', debouncedSearch);
+
+    // Immediate update when genre filter changes
+    if (genreSelect) {
+      genreSelect.addEventListener('change', executeLiveSearch);
+    }
+
+    // Prevent full page reload on Enter
+    if (searchForm) {
+      searchForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        executeLiveSearch();
+      });
+    }
+  }
+
+  // --------------------------------------------------------------------------
+  // 4. Hero Background Sync for Detail Pages
+  // --------------------------------------------------------------------------
+  const heroBg = document.querySelector('.hero-bg');
+  const globalBg = document.getElementById('globalBg');
+  if (heroBg && globalBg) {
+    const match = heroBg.style.backgroundImage.match(/url\(['"]?(.*?)['"]?\)/);
+    if (match && match[1]) {
+      globalBg.style.backgroundImage = `url('${match[1]}')`;
     }
   }
 

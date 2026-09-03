@@ -1,8 +1,8 @@
 <div class="search-section-dock">
-  <form action="/movies" method="GET" class="search-form-dock glass-panel">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-    <input type="text" name="search" placeholder="Search movies..." value="<%= searchQuery %>" class="form-control-dock">
-    <select name="genre" class="form-control-dock genre-select">
+  <form action="/movies" method="GET" class="search-form-dock glass-panel" id="movieSearchForm">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+    <input type="text" name="search" id="movieSearchInput" placeholder="Search movies..." value="<%= searchQuery %>" class="form-control-dock" autocomplete="off">
+    <select name="genre" id="movieGenreSelect" class="form-control-dock genre-select">
       <option value="">All Genres</option>
       <% const genres = ['Action', 'Comedy', 'Drama', 'Sci-Fi', 'Horror', 'Romance', 'Thriller', 'Animation', 'Documentary']; %>
       <% genres.forEach(g => { %>
@@ -15,6 +15,8 @@
     <a href="/movies/new" class="btn btn-primary btn-sm ml-3">Add Movie</a>
   <% } %>
 </div>
+
+<div id="moviesMainDisplay">
 
 <% if (popular && popular.length > 0) { %>
   <div class="coverflow-section">
@@ -73,4 +75,5 @@
       <p class="text-muted p-4 glass-panel-soft text-center mx-auto" style="max-width:400px;">No movies found.</p>
     <% } %>
   </div>
+</div>
 </div>

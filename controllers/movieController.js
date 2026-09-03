@@ -5,11 +5,16 @@ exports.getMovies = async (req, res) => {
   try {
     const { search, genre } = req.query;
     let query = {};
-    if (search) {
-      query.$text = { $search: search };
+    if (search && search.trim()) {
+      const cleanSearch = search.trim();
+      query.$or = [
+        { title: { $regex: cleanSearch, $options: 'i' } },
+        { description: { $regex: cleanSearch, $options: 'i' } },
+        { cast: { $regex: cleanSearch, $options: 'i' } }
+      ];
     }
-    if (genre) {
-      query.genre = genre;
+    if (genre && genre.trim()) {
+      query.genre = genre.trim();
     }
 
     const movies = await Movie.find(query).sort({ createdAt: -1 });
