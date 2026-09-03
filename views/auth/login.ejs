@@ -1,15 +1,35 @@
-<div class="form-container glass-panel">
-  <h2>Login</h2>
-  <form action="/auth/login" method="POST">
-    <div class="form-group">
-      <label for="email">Email</label>
-      <input type="email" id="email" name="email" required class="form-control">
+<!-- ==========================================================================
+     Clean Minimalist Login View (views/auth/login.ejs)
+     ========================================================================== -->
+<div class="auth-wrapper">
+  <div class="auth-card">
+    <div class="auth-header">
+      <h1 class="auth-title">Welcome back</h1>
+      <p class="auth-subtitle">Sign in to your Cineplex account</p>
     </div>
-    <div class="form-group">
-      <label for="password">Password</label>
-      <input type="password" id="password" name="password" required class="form-control">
+
+    <form action="/auth/login" method="POST" class="auth-form">
+      <!-- Email -->
+      <div class="field-group">
+        <label for="email" class="field-label">Email address</label>
+        <input type="email" id="email" name="email" required class="clean-input" placeholder="you@example.com" autocomplete="email">
+      </div>
+
+      <!-- Password -->
+      <div class="field-group">
+        <label for="password" class="field-label">Password</label>
+        <input type="password" id="password" name="password" required class="clean-input" placeholder="••••••••" autocomplete="current-password">
+      </div>
+
+      <!-- Submit Button -->
+      <button type="submit" class="btn-clean-primary mt-2">
+        Sign in
+      </button>
+    </form>
+
+    <div class="auth-footer">
+      <span class="text-muted">Don't have an account?</span>
+      <a href="/auth/register" class="auth-link">Create account</a>
     </div>
-    <button type="submit" class="btn btn-primary w-100 mt-3">Login</button>
-  </form>
-  <p class="mt-4 text-center text-muted">Don't have an account? <a href="/auth/register">Register</a></p>
+  </div>
 </div>
