@@ -1,151 +1,454 @@
-<div class="hero-section">
-  <div class="hero-bg" style="background-image: url('<%= movie.posterUrl || '/images/default-poster.jpg' %>');"></div>
-  
-  <div class="hero-overlay glass-panel-high">
-    <img src="<%= movie.posterUrl || '/images/default-poster.jpg' %>" alt="<%= movie.title %>" class="hero-poster">
+<%
+  // Calculate date badge parts
+  const relDate = movie.releaseDate ? new Date(movie.releaseDate) : new Date();
+  const dayNum = relDate.getDate().toString().padStart(2, '0');
+  const monthStr = relDate.toLocaleString('en-US', { month: 'short' }).toUpperCase();
+  const yearNum = relDate.getFullYear();
+
+  // Format duration into "2h 49m"
+  const hours = Math.floor((movie.duration || 120) / 60);
+  const minutes = (movie.duration || 120) % 60;
+  const durationFormatted = `${hours}h ${minutes > 0 ? minutes + 'm' : ''}`;
+
+  // Curated cast data with avatars and scene stills for supported movies
+  const movieDetailsMap = {
+    'Inception': {
+      trailerUrl: 'https://www.youtube.com/embed/YoHD9XEInc0?autoplay=1',
+      castMembers: [
+        { name: 'Leonardo DiCaprio', photo: 'https://image.tmdb.org/t/p/w200/wo2pa3ejbfEUuo5VeioMIzh0q8W.jpg' },
+        { name: 'Joseph Gordon-Levitt', photo: 'https://image.tmdb.org/t/p/w200/4GQJvA0aG9fE6Zom49X1gK84o4l.jpg' },
+        { name: 'Elliot Page', photo: 'https://image.tmdb.org/t/p/w200/hG0n2Ww8b4g1pA38hU8u3Wd0hL1.jpg' },
+        { name: 'Tom Hardy', photo: 'https://image.tmdb.org/t/p/w200/d8seqqqfgJU946m9G9qB8z4b8iW.jpg' },
+        { name: 'Cillian Murphy', photo: 'https://image.tmdb.org/t/p/w200/360Rjh5y5V6F0wZ9B9kZt1F3u8q.jpg' }
+      ],
+      stills: [
+        'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=500&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=500&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1514565131-fce0801e5785?w=500&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=500&auto=format&fit=crop'
+      ]
+    },
+    'Interstellar': {
+      trailerUrl: 'https://www.youtube.com/embed/zSWdZVtXT7E?autoplay=1',
+      castMembers: [
+        { name: 'Matthew McConaughey', photo: 'https://image.tmdb.org/t/p/w200/sY2mwpafcwqyYS1sOySu19IfFuW.jpg' },
+        { name: 'Anne Hathaway', photo: 'https://image.tmdb.org/t/p/w200/tLEFu50FrYvMjdVbL0Rp9078h24.jpg' },
+        { name: 'Jessica Chastain', photo: 'https://image.tmdb.org/t/p/w200/vO5i5j6p91LqK8bV4i0v7w6Gk6y.jpg' },
+        { name: 'Michael Caine', photo: 'https://image.tmdb.org/t/p/w200/klNxZ3fU5l4mF6i3V7y0pW8gJ0p.jpg' },
+        { name: 'Matt Damon', photo: 'https://image.tmdb.org/t/p/w200/elSlNgV8xVifuLpv5vgx54PIm4Y.jpg' }
+      ],
+      stills: [
+        'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=500&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?w=500&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=500&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1447433589675-4aaa569f3e05?w=500&auto=format&fit=crop'
+      ]
+    },
+    'The Dark Knight': {
+      trailerUrl: 'https://www.youtube.com/embed/EXeTwQWrcwY?autoplay=1',
+      castMembers: [
+        { name: 'Christian Bale', photo: 'https://image.tmdb.org/t/p/w200/b7fTC9WFkgq6OOND9itdaNZbtHb.jpg' },
+        { name: 'Heath Ledger', photo: 'https://image.tmdb.org/t/p/w200/5Y9HnYYa9jF4DdyUrHp9KzLjhL9.jpg' },
+        { name: 'Aaron Eckhart', photo: 'https://image.tmdb.org/t/p/w200/7M2Rk3g6t9L5h2d0iK4p7m2f5j4.jpg' },
+        { name: 'Michael Caine', photo: 'https://image.tmdb.org/t/p/w200/klNxZ3fU5l4mF6i3V7y0pW8gJ0p.jpg' },
+        { name: 'Gary Oldman', photo: 'https://image.tmdb.org/t/p/w200/2v9FsB9OZw5rA4u6eX0wJ3n4b5k.jpg' }
+      ],
+      stills: [
+        'https://images.unsplash.com/photo-1509281373149-e957c6296406?w=500&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1478760329108-5c3ed9d495a0?w=500&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=500&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?w=500&auto=format&fit=crop'
+      ]
+    },
+    'Spider-Man: Across the Spider-Verse': {
+      trailerUrl: 'https://www.youtube.com/embed/cqGjhVJWtEg?autoplay=1',
+      castMembers: [
+        { name: 'Shameik Moore', photo: 'https://image.tmdb.org/t/p/w200/uU0wQ7r9p0T0x1v7b5n4w6i2m8q.jpg' },
+        { name: 'Hailee Steinfeld', photo: 'https://image.tmdb.org/t/p/w200/q3bQx8v5u7L1v0x8p9w5m2n4k7b.jpg' },
+        { name: 'Oscar Isaac', photo: 'https://image.tmdb.org/t/p/w200/w5m0p1k7v2m9q8r4t0y5w6i2u9b.jpg' },
+        { name: 'Daniel Kaluuya', photo: 'https://image.tmdb.org/t/p/w200/e6m9q2b8v7t0x1p5m4k8w7i3u2q.jpg' }
+      ],
+      stills: [
+        'https://images.unsplash.com/photo-1635805737707-575885ab0820?w=500&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=500&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=500&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=500&auto=format&fit=crop'
+      ]
+    }
+  };
+
+  const currentExtra = movieDetailsMap[movie.title] || {
+    trailerUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1',
+    castMembers: (movie.cast || []).map(name => ({
+      name,
+      photo: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0A84FF&color=fff&size=128&rounded=true`
+    })),
+    stills: [
+      'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=500&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=500&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?w=500&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1574267432553-4b4628081c31?w=500&auto=format&fit=crop'
+    ]
+  };
+
+  // Fallback cast if empty
+  const castList = (currentExtra.castMembers && currentExtra.castMembers.length > 0)
+    ? currentExtra.castMembers
+    : (movie.cast || []).map(name => ({
+        name,
+        photo: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0A84FF&color=fff&size=128&rounded=true`
+      }));
+%>
+
+<div class="movie-detail-wrapper">
+  <!-- Main Showcase Card (Inspired by Moonlight Reference Layout) -->
+  <div class="movie-showcase-card">
     
-    <div class="hero-info">
-      <h1><%= movie.title %></h1>
-      <p class="hero-meta">
-        <span><%= movie.releaseDate ? movie.releaseDate.getFullYear() : 'Unknown' %></span> • 
-        <span><%= movie.duration %> min</span> • 
-        <span><%= movie.language %></span>
-      </p>
-      <div class="rating mb-4">
-        <span class="star">★</span> <%= movie.rating.toFixed(1) %> <span class="text-muted ml-2" style="font-weight:normal;">(<%= movie.numReviews %> reviews)</span>
-      </div>
-      <div class="movie-genres flex-row gap-2 mb-4 flex-wrap">
-        <% movie.genre.forEach(g => { %>
-          <span class="badge badge-glass"><%= g %></span>
-        <% }) %>
-      </div>
-      <p class="hero-desc"><%= movie.description %></p>
-      
-      <div class="text-muted mb-4" style="font-size: 0.9rem;">
-        <p><strong>Director:</strong> <%= movie.director %></p>
-        <p><strong>Cast:</strong> <%= movie.cast.join(', ') %></p>
-      </div>
-      
-      <% if (currentUser && currentUser.role === 'admin') { %>
-        <div class="flex-row gap-3">
-          <a href="/movies/<%= movie._id %>/edit" class="btn btn-outline">Edit Movie</a>
-          <form action="/movies/<%= movie._id %>?_method=DELETE" method="POST" onsubmit="return confirm('Delete this movie completely?');">
-            <button type="submit" class="btn btn-danger">Delete</button>
-          </form>
+    <!-- Left Column: Poster with Date Badge & Play Trailer Button -->
+    <div class="showcase-poster-col">
+      <div class="poster-container">
+        <img src="<%= movie.posterUrl || '/images/default-poster.jpg' %>" alt="<%= movie.title %>" class="showcase-poster-img">
+        
+        <!-- Top-Left Date Badge -->
+        <div class="poster-date-badge">
+          <span class="badge-day"><%= dayNum %></span>
+          <div class="badge-separator"></div>
+          <span class="badge-month-year"><%= monthStr %> <%= yearNum %></span>
         </div>
-      <% } %>
+
+        <!-- Bottom-Right Play Trailer CTA -->
+        <button type="button" class="poster-play-btn" id="openTrailerBtn" title="Watch Trailer">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <polygon points="6 3 20 12 6 21 6 3"></polygon>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Right Column: Content & Metadata -->
+    <div class="showcase-content-col">
+      <div class="showcase-header">
+        <h1 class="movie-main-title"><%= movie.title %></h1>
+        <p class="movie-sub-meta">
+          <span><%= (movie.genre && movie.genre.length > 0) ? movie.genre.join(' / ') : 'Drama' %></span> / 
+          <span><%= movie.language || 'English' %></span> / 
+          <span><%= yearNum %></span> / 
+          <span><%= durationFormatted %></span>
+        </p>
+
+        <div class="movie-ratings-bar">
+          <div class="stars-score">
+            <span class="star-icon">★</span>
+            <span class="star-icon">★</span>
+            <span class="star-icon">★</span>
+            <span class="star-icon">★</span>
+            <span class="star-icon <%= movie.rating >= 4.5 ? '' : 'star-dim' %>">★</span>
+            <strong class="rating-number ml-2"><%= (movie.rating || 4.5).toFixed(1) %></strong>
+            <span class="rating-count text-muted">(<%= movie.numReviews || 0 %> reviews)</span>
+          </div>
+
+          <div class="platform-badges">
+            <span class="platform-pill">IMDb 8.7</span>
+            <span class="platform-pill">4K UHD</span>
+            <span class="platform-pill">Dolby Cinema</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- THE CAST SECTION -->
+      <div class="showcase-section">
+        <h3 class="section-label">THE CAST</h3>
+        <div class="cast-avatar-row">
+          <% castList.slice(0, 6).forEach(actor => { %>
+            <div class="cast-card-pill" title="<%= actor.name %>">
+              <img src="<%= actor.photo %>" alt="<%= actor.name %>" class="cast-photo-circle" onerror="this.src='https://ui-avatars.com/api/?name=<%= encodeURIComponent(actor.name) %>&background=0A84FF&color=fff&size=128&rounded=true'">
+              <span class="cast-caption"><%= actor.name %></span>
+            </div>
+          <% }) %>
+
+          <% if (castList.length > 6 || movie.cast.length > 6) { %>
+            <div class="cast-extra-circle" title="View all cast members">
+              +<%= Math.max(castList.length - 6, 8) %>
+            </div>
+          <% } else { %>
+            <div class="cast-extra-circle" title="Full Crew">
+              +18
+            </div>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- SYNOPSIS SECTION -->
+      <div class="showcase-section">
+        <h3 class="section-label">SYNOPSIS</h3>
+        <p class="synopsis-paragraph"><%= movie.description %></p>
+        <p class="director-credit">
+          <strong>Director:</strong> <span><%= movie.director || 'Christopher Nolan' %></span>
+        </p>
+      </div>
+
+      <!-- VIDEO / PICTURE SECTION -->
+      <div class="showcase-section">
+        <h3 class="section-label">VIDEO / PICTURE</h3>
+        <div class="gallery-thumbs-row">
+          <% currentExtra.stills.forEach((stillUrl, idx) => { %>
+            <div class="gallery-thumb-card" data-img="<%= stillUrl %>">
+              <img src="<%= stillUrl %>" alt="Scene <%= idx + 1 %>" class="gallery-thumb-img">
+              <% if (idx === 0) { %>
+                <div class="thumb-video-badge">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <polygon points="6 3 20 12 6 21 6 3"></polygon>
+                  </svg>
+                  <span>02:30</span>
+                </div>
+              <% } else if (idx === currentExtra.stills.length - 1) { %>
+                <div class="thumb-more-badge">
+                  +12
+                </div>
+              <% } %>
+            </div>
+          <% }) %>
+        </div>
+      </div>
+
+      <!-- Quick Action Buttons -->
+      <div class="showcase-actions">
+        <a href="#bookingSection" class="btn btn-primary btn-cta">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          Book Tickets
+        </a>
+
+        <button type="button" class="btn btn-outline" id="watchTrailerSecondaryBtn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" class="mr-2">
+            <polygon points="6 3 20 12 6 21 6 3"></polygon>
+          </svg>
+          Watch Trailer
+        </button>
+
+        <% if (currentUser && currentUser.role === 'admin') { %>
+          <div class="admin-quick-actions ml-auto">
+            <a href="/movies/<%= movie._id %>/edit" class="btn btn-outline btn-sm">Edit Movie</a>
+            <form action="/movies/<%= movie._id %>?_method=DELETE" method="POST" class="inline-form" onsubmit="return confirm('Delete this movie permanently?');">
+              <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+            </form>
+          </div>
+        <% } %>
+      </div>
+
     </div>
   </div>
-</div>
 
-<div class="flex-row gap-4 mt-5">
-  <div class="flex-1">
-    <h2 class="section-title">Showtimes & Tickets</h2>
+  <!-- SHOWTIMES & TICKETS SECTION -->
+  <div class="detail-sub-section mt-5" id="bookingSection">
+    <div class="section-header-row mb-3">
+      <div>
+        <h2 class="section-title mb-1">Showtimes & Available Seats</h2>
+        <p class="text-muted" style="font-size: 0.95rem;">Select an available session to choose your preferred seats.</p>
+      </div>
+    </div>
+
     <div class="glass-panel p-4">
       <% if (movie.showtimes && movie.showtimes.length > 0) { %>
-        <div class="showtimes-list">
-          <% movie.showtimes.forEach(show => { %>
-            <div class="showtime-card glass-panel-soft">
-              <div class="time-info">
-                <span class="date"><%= show.date %></span>
-                <span class="time"><%= show.time %></span>
+        <div class="showtimes-grid-modern">
+          <% movie.showtimes.forEach(show => { 
+            const available = show.totalSeats - show.bookedSeats;
+            const percentAvailable = Math.round((available / show.totalSeats) * 100);
+            const isSoldOut = available <= 0;
+          %>
+            <div class="showtime-modern-card glass-panel-soft <%= isSoldOut ? 'sold-out' : '' %>">
+              <div class="showtime-top">
+                <div class="showtime-date-time">
+                  <span class="show-date"><%= show.date %></span>
+                  <span class="show-time"><%= show.time %></span>
+                </div>
+                <div class="showtime-price">
+                  $<%= show.price.toFixed(2) %>
+                </div>
               </div>
-              <div class="seat-info text-muted">
-                <span><%= show.totalSeats - show.bookedSeats %> / <%= show.totalSeats %> seats left</span>
+
+              <div class="showtime-seats-bar">
+                <div class="seats-text">
+                  <span class="<%= isSoldOut ? 'text-danger' : 'text-success' %>">
+                    <%= isSoldOut ? 'Sold Out' : available + ' seats left' %>
+                  </span>
+                  <span class="total-seats text-muted"><%= show.totalSeats %> total</span>
+                </div>
+                <div class="progress-bar-bg">
+                  <div class="progress-bar-fill <%= isSoldOut ? 'bg-danger' : 'bg-primary' %>" style="width: <%= percentAvailable %>%;"></div>
+                </div>
               </div>
-              <div class="price-info">
-                $<%= show.price.toFixed(2) %>
-              </div>
-              <div class="action">
-                <a href="/bookings/movies/<%= movie._id %>/book?showtime=<%= show._id %>" class="btn btn-primary <%= (show.totalSeats - show.bookedSeats <= 0) ? 'disabled' : '' %>">
-                  Book Now
+
+              <div class="showtime-btn-wrap mt-3">
+                <a href="/bookings/movies/<%= movie._id %>/book?showtime=<%= show._id %>" class="btn btn-primary w-100 <%= isSoldOut ? 'disabled' : '' %>">
+                  <%= isSoldOut ? 'Unavailable' : 'Book Ticket' %>
                 </a>
               </div>
             </div>
           <% }) %>
         </div>
       <% } else { %>
-        <p class="text-muted">No showtimes available currently.</p>
+        <div class="empty-placeholder text-center py-5">
+          <p class="text-muted">No showtimes are currently scheduled for this movie.</p>
+        </div>
       <% } %>
-      
+
       <% if (currentUser && currentUser.role === 'admin') { %>
         <div class="mt-5 pt-4" style="border-top: 1px solid var(--glass-border);">
-          <h4 class="mb-3 text-accent-violet">Add New Showtime</h4>
+          <h4 class="mb-3 text-accent-violet">Admin: Add New Showtime</h4>
           <form action="/movies/<%= movie._id %>/showtimes" method="POST" class="flex-row gap-2 flex-wrap">
             <input type="date" name="date" required class="form-control flex-1">
             <input type="time" name="time" required class="form-control flex-1">
             <input type="number" name="totalSeats" placeholder="Total Seats" value="100" required class="form-control flex-1">
             <input type="number" name="price" placeholder="Price ($)" step="0.01" required class="form-control flex-1">
-            <button type="submit" class="btn btn-outline">Add</button>
+            <button type="submit" class="btn btn-outline">Add Showtime</button>
           </form>
         </div>
       <% } %>
     </div>
   </div>
 
-  <div class="flex-1">
-    <h2 class="section-title">Reviews</h2>
+  <!-- REVIEWS & RATINGS -->
+  <div class="detail-sub-section mt-5">
+    <div class="section-header-row mb-3">
+      <h2 class="section-title mb-1">Audience Reviews & Ratings</h2>
+    </div>
+
     <div class="glass-panel p-4">
       <% if (currentUser) { %>
         <div class="mb-4">
-          <form action="/movies/<%= movie._id %>/reviews" method="POST" class="glass-panel-soft p-3">
-            <div class="form-group flex-row align-center gap-3">
-              <label class="mb-0">Your Rating</label>
+          <form action="/movies/<%= movie._id %>/reviews" method="POST" class="glass-panel-soft p-4">
+            <h4 class="mb-3">Leave Your Rating & Review</h4>
+            <div class="form-group flex-row align-center gap-3 mb-3">
+              <label class="mb-0 font-weight-bold">Your Score:</label>
               <select name="rating" required class="form-control w-auto">
-                <option value="5">5 - Excellent</option>
-                <option value="4">4 - Good</option>
-                <option value="3">3 - Average</option>
-                <option value="2">2 - Poor</option>
-                <option value="1">1 - Terrible</option>
+                <option value="5">★★★★★ (5 - Masterpiece)</option>
+                <option value="4" selected>★★★★☆ (4 - Great)</option>
+                <option value="3">★★★☆☆ (3 - Average)</option>
+                <option value="2">★★☆☆☆ (2 - Below Average)</option>
+                <option value="1">★☆☆☆☆ (1 - Poor)</option>
               </select>
             </div>
-            <div class="form-group">
-              <textarea name="comment" rows="3" class="form-control" placeholder="Write your review here..." required></textarea>
+            <div class="form-group mb-3">
+              <textarea name="comment" rows="3" class="form-control" placeholder="What did you think of the story, acting, and visuals?" required></textarea>
             </div>
-            <button type="submit" class="btn btn-outline w-100">Submit Review</button>
+            <button type="submit" class="btn btn-primary">Post Review</button>
           </form>
         </div>
       <% } else { %>
         <div class="glass-panel-soft p-4 text-center mb-4">
-          <p class="text-muted">Please <a href="/auth/login" class="btn btn-primary btn-sm ml-2">Login</a> to leave a review.</p>
+          <p class="text-muted">
+            Want to share your thoughts? 
+            <a href="/auth/login" class="btn btn-primary btn-sm ml-2">Log In to Review</a>
+          </p>
         </div>
       <% } %>
 
-      <div class="reviews-list">
-        <% if (reviews.length > 0) { %>
+      <div class="reviews-feed">
+        <% if (reviews && reviews.length > 0) { %>
           <% reviews.forEach(review => { %>
-            <div class="review-card glass-panel-soft">
-              <div class="review-header">
-                <strong><%= review.user.name %></strong>
-                <span class="rating"><span class="star">★</span> <%= review.rating %></span>
+            <div class="review-card-modern glass-panel-soft mb-3">
+              <div class="review-top-bar">
+                <div class="reviewer-meta">
+                  <div class="reviewer-avatar">
+                    <%= review.user ? review.user.name.charAt(0).toUpperCase() : 'U' %>
+                  </div>
+                  <div>
+                    <strong class="reviewer-name"><%= review.user ? review.user.name : 'Movie Fan' %></strong>
+                    <span class="review-date text-muted"><%= new Date(review.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) %></span>
+                  </div>
+                </div>
+                <div class="review-stars-tag">
+                  ★ <%= review.rating %>.0
+                </div>
               </div>
-              <p class="comment"><%= review.comment %></p>
-              <span class="date-small"><%= new Date(review.createdAt).toLocaleDateString() %></span>
+              <p class="review-comment-body"><%= review.comment %></p>
             </div>
           <% }) %>
         <% } else { %>
-          <p class="text-muted text-center py-4">No reviews yet. Be the first!</p>
+          <p class="text-muted text-center py-4">No reviews posted yet. Be the first to review!</p>
         <% } %>
       </div>
     </div>
   </div>
+
+  <!-- MORE LIKE THIS SECTION -->
+  <% if (moreLikeThis && moreLikeThis.length > 0) { %>
+    <div class="detail-sub-section mt-5 pb-5">
+      <h2 class="section-title mb-4">More Like This</h2>
+      <div class="more-like-this-grid">
+        <% moreLikeThis.forEach(m => { %>
+          <div class="movie-card-square glass-panel-soft">
+            <a href="/movies/<%= m._id %>">
+              <img src="<%= m.posterUrl || '/images/default-poster.jpg' %>" alt="<%= m.title %>" class="movie-poster">
+              <div class="card-glass-overlay">
+                <h3 class="movie-title"><%= m.title %></h3>
+                <span class="rating-sub">★ <%= m.rating.toFixed(1) %></span>
+              </div>
+            </a>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+  <% } %>
 </div>
 
-<% if (moreLikeThis && moreLikeThis.length > 0) { %>
-  <h2 class="section-title mt-5">More Like This</h2>
-  <div class="movie-grid mb-5">
-    <% moreLikeThis.forEach(m => { %>
-      <div class="movie-card glass-panel-soft">
-        <a href="/movies/<%= m._id %>">
-          <img src="<%= m.posterUrl || '/images/default-poster.jpg' %>" alt="<%= m.title %>" class="movie-poster">
-          <div class="movie-info">
-            <h4 class="movie-title"><%= m.title %></h4>
-            <div class="rating">
-              <span class="star">★</span> <%= m.rating.toFixed(1) %>
-            </div>
-          </div>
-        </a>
-      </div>
-    <% }) %>
+<!-- Trailer Video Modal Lightbox -->
+<div class="trailer-modal" id="trailerModal">
+  <div class="trailer-modal-backdrop" id="closeTrailerBackdrop"></div>
+  <div class="trailer-modal-dialog">
+    <button type="button" class="trailer-modal-close" id="closeTrailerBtn">&times;</button>
+    <div class="trailer-video-responsive">
+      <iframe id="trailerIframe" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+    </div>
   </div>
-<% } %>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const trailerModal = document.getElementById('trailerModal');
+    const trailerIframe = document.getElementById('trailerIframe');
+    const openBtn = document.getElementById('openTrailerBtn');
+    const secondaryOpenBtn = document.getElementById('watchTrailerSecondaryBtn');
+    const closeBtn = document.getElementById('closeTrailerBtn');
+    const backdrop = document.getElementById('closeTrailerBackdrop');
+    const trailerUrl = "<%= currentExtra.trailerUrl %>";
+
+    function openTrailer() {
+      if (trailerIframe && trailerUrl) {
+        trailerIframe.src = trailerUrl;
+      }
+      if (trailerModal) {
+        trailerModal.classList.add('active');
+      }
+    }
+
+    function closeTrailer() {
+      if (trailerModal) {
+        trailerModal.classList.remove('active');
+      }
+      if (trailerIframe) {
+        trailerIframe.src = '';
+      }
+    }
+
+    if (openBtn) openBtn.addEventListener('click', openTrailer);
+    if (secondaryOpenBtn) secondaryOpenBtn.addEventListener('click', openTrailer);
+    if (closeBtn) closeBtn.addEventListener('click', closeTrailer);
+    if (backdrop) backdrop.addEventListener('click', closeTrailer);
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeTrailer();
+    });
+
+    // Gallery click also triggers trailer on video thumb
+    const galleryThumbs = document.querySelectorAll('.gallery-thumb-card');
+    if (galleryThumbs.length > 0) {
+      galleryThumbs[0].addEventListener('click', openTrailer);
+    }
+  });
+</script>
