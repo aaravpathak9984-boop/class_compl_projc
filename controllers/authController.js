@@ -1,65 +1,141 @@
+/**
+ * ============================================================================
+ * Authentication Controller (authController.js)
+ * ============================================================================
+ * Handles user registration with custom strong-password validation, secure
+ * login with Bcrypt credential verification, and clean session teardown.
+ */
+
 const User = require('../models/User');
 
+/**
+ * Render the Registration View
+ * GET /auth/register
+ */
 exports.getRegister = (req, res) => {
-  res.render('auth/register', { title: 'Register' });
+  res.render('auth/register', { title: 'Register - Cineplex' });
 };
 
+/**
+ * Handle User Registration
+ * POST /auth/register
+ * 
+ * - Validates matching passwords
+ * - Validates strong password rules:
+ *     * Minimum 8 characters
+ *     * At least one uppercase letter (A-Z)
+ *     * At least one number (0-9)
+ *     * At least one special symbol (!@#$%^&*...)
+ * - Normalizes and verifies unique email address
+ * - Hashes password using Bcrypt with 10 salt rounds (via User model pre-save hook)
+ * - Persists user to MongoDB Atlas
+ */
 exports.postRegister = async (req, res) => {
   const { name, email, password, confirmPassword, favoriteGenres } = req.body;
   
+  // 1. Check if passwords match
   if (password !== confirmPassword) {
-    req.flash('error_msg', 'Passwords do not match.');
+    req.flash('error_msg', 'Passwords do not match. Please re-enter.');
+    return res.redirect('/auth/register');
+  }
+
+  // 2. Custom Strong Password Validation Recommendations
+  if (!password || password.length < 8) {
+    req.flash('error_msg', 'Weak Password: Must be at least 8 characters long.');
+    return res.redirect('/auth/register');
+  }
+
+  if (!/[A-Z]/.test(password)) {
+    req.flash('error_msg', 'Weak Password: Must contain at least one uppercase letter (A-Z).');
+    return res.redirect('/auth/register');
+  }
+
+  if (!/[0-9]/.test(password)) {
+    req.flash('error_msg', 'Weak Password: Must contain at least one number (0-9).');
+    return res.redirect('/auth/register');
+  }
+
+  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+    req.flash('error_msg', 'Weak Password: Must contain at least one special character (!@#$%^&*...).');
     return res.redirect('/auth/register');
   }
 
   try {
+    // 3. Normalize email: trim whitespaces and lowercase
     const cleanEmail = email ? email.trim().toLowerCase() : '';
-    let user = await User.findOne({ email: cleanEmail });
-    if (user) {
-      req.flash('error_msg', 'Email already exists.');
+    
+    // 4. Verify if email is already in use
+    let existingUser = await User.findOne({ email: cleanEmail });
+    if (existingUser) {
+      req.flash('error_msg', 'An account with this email already exists.');
       return res.redirect('/auth/register');
     }
 
-    // favoriteGenres comes as an array or single string from checkboxes
-    const genresArray = favoriteGenres ? (Array.isArray(favoriteGenres) ? favoriteGenres : [favoriteGenres]) : [];
+    // 5. Format favorite genres array
+    const genresArray = favoriteGenres 
+      ? (Array.isArray(favoriteGenres) ? favoriteGenres : [favoriteGenres]) 
+      : [];
 
-    user = new User({
-      name: name ? name.trim() : '',
+    // 6. Create new User document
+    // NOTE: Password is automatically hashed using Bcrypt in User.js pre('save') hook
+    const user = new User({
+      name: name ? name.trim() : 'Anonymous User',
       email: cleanEmail,
-      password,
+      password: password, // Pre-save hook hashes this with bcrypt
       favoriteGenres: genresArray
     });
 
+    // 7. Save to MongoDB
     await user.save();
-    req.flash('success_msg', 'You are now registered and can log in.');
+    
+    req.flash('success_msg', 'Registration successful! You can now log in.');
     res.redirect('/auth/login');
   } catch (err) {
-    console.error(err);
-    req.flash('error_msg', 'Server error during registration.');
+    console.error('Registration Error:', err);
+    req.flash('error_msg', 'A server error occurred during registration. Please try again.');
     res.redirect('/auth/register');
   }
 };
 
+/**
+ * Render the Login View
+ * GET /auth/login
+ */
 exports.getLogin = (req, res) => {
-  res.render('auth/login', { title: 'Login' });
+  res.render('auth/login', { title: 'Login - Cineplex' });
 };
 
+/**
+ * Handle User Login
+ * POST /auth/login
+ * 
+ * - Normalizes submitted email
+ * - Finds user in MongoDB
+ * - Compares plaintext password against Bcrypt hash
+ * - Establishes express session saved in MongoDB (connect-mongo)
+ */
 exports.postLogin = async (req, res) => {
   const { email, password } = req.body;
+
   try {
+    // 1. Clean email input
     const cleanEmail = email ? email.trim().toLowerCase() : '';
+    
+    // 2. Query user by email
     const user = await User.findOne({ email: cleanEmail });
     if (!user) {
-      req.flash('error_msg', 'Invalid credentials.');
+      req.flash('error_msg', 'Invalid email or password.');
       return res.redirect('/auth/login');
     }
 
+    // 3. Check password using bcrypt.compare
     const isMatch = await user.matchPassword(password);
     if (!isMatch) {
-      req.flash('error_msg', 'Invalid credentials.');
+      req.flash('error_msg', 'Invalid email or password.');
       return res.redirect('/auth/login');
     }
 
+    // 4. Create session payload
     req.session.user = {
       id: user._id,
       name: user.name,
@@ -71,15 +147,34 @@ exports.postLogin = async (req, res) => {
     req.flash('success_msg', `Welcome back, ${user.name}!`);
     res.redirect('/movies');
   } catch (err) {
-    console.error(err);
-    req.flash('error_msg', 'Server error during login.');
+    console.error('Login Error:', err);
+    req.flash('error_msg', 'A server error occurred during login.');
     res.redirect('/auth/login');
   }
 };
 
+/**
+ * Handle User Logout
+ * GET /auth/logout or POST /auth/logout
+ * 
+ * - Explicitly destroys session record in MongoDB
+ * - Clears the session cookie from the user's browser
+ * - Redirects to login page with clean state
+ */
 exports.logout = (req, res) => {
-  req.session.destroy((err) => {
-    if (err) console.error(err);
+  if (req.session) {
+    // 1. Destroy session in MongoDB Atlas store
+    req.session.destroy((err) => {
+      if (err) {
+        console.error('Error destroying session:', err);
+      }
+      // 2. Clear connect.sid cookie from browser
+      res.clearCookie('connect.sid', { path: '/' });
+      // 3. Redirect to login view
+      return res.redirect('/auth/login');
+    });
+  } else {
+    res.clearCookie('connect.sid', { path: '/' });
     res.redirect('/auth/login');
-  });
+  }
 };

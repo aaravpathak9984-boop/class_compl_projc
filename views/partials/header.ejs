@@ -1,42 +1,141 @@
+<!-- ==========================================================================
+     Global Floating Dock Navigation (header.ejs)
+     Provides access to catalog, bookings, admin dashboard, user profile, and logout.
+     ========================================================================== -->
 <nav class="floating-dock glass-panel-high">
   <div class="dock-content">
-    <a href="/movies" class="dock-brand">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon></svg>
+    <!-- Brand / Home Link -->
+    <a href="/movies" class="dock-brand" title="Cineplex Home">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <polygon points="10 8 16 12 10 16 10 8"></polygon>
+      </svg>
     </a>
     
     <div class="dock-links">
+      <!-- Browse Movies Link -->
       <a href="/movies" class="dock-link" title="Browse Movies">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          <polyline points="9 22 9 12 15 12 15 22"></polyline>
+        </svg>
       </a>
       
       <% if (currentUser) { %>
+        <!-- My Bookings Link -->
         <a href="/bookings/my" class="dock-link" title="My Bookings">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
         </a>
         
+        <!-- Admin Dashboard Link (Admins Only) -->
         <% if (currentUser.role === 'admin') { %>
           <a href="/admin/dashboard" class="dock-link admin-dock-link" title="Admin Dashboard">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
           </a>
         <% } %>
 
-        <div class="dock-user dropdown-up">
-          <div class="dock-user-btn" title="<%= currentUser.name %>">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-          </div>
-          <div class="dropdown-content-up glass-panel-high">
-            <a href="/auth/logout">Logout</a>
+        <!-- User Profile & Logout Dropdown -->
+        <div class="dock-user dropdown-up" id="dockUserDropdown">
+          <button type="button" class="dock-user-btn" id="dockUserBtn" title="<%= currentUser.name %>">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </button>
+          
+          <!-- Dropdown Menu (Positioned neatly above the dock) -->
+          <div class="dropdown-content-up glass-panel-high" id="dockUserMenu">
+            <div class="user-menu-header">
+              <span class="user-menu-name"><%= currentUser.name %></span>
+              <span class="user-menu-role <%= currentUser.role === 'admin' ? 'role-admin' : 'role-user' %>">
+                <%= currentUser.role === 'admin' ? 'Administrator' : 'Member' %>
+              </span>
+            </div>
+            
+            <div class="user-menu-divider"></div>
+
+            <a href="/bookings/my" class="user-menu-item">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              My Bookings
+            </a>
+
+            <% if (currentUser.role === 'admin') { %>
+              <a href="/admin/dashboard" class="user-menu-item">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-2">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
+                Admin Panel
+              </a>
+            <% } %>
+
+            <div class="user-menu-divider"></div>
+
+            <!-- Direct Functional Logout Form & Link -->
+            <form action="/auth/logout" method="POST" class="logout-form">
+              <button type="submit" class="user-menu-item logout-btn">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-2">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                  <polyline points="16 17 21 12 16 7"></polyline>
+                  <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+                Log Out
+              </button>
+            </form>
           </div>
         </div>
 
       <% } else { %>
+        <!-- Guest Links -->
         <a href="/auth/login" class="dock-link" title="Login">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+            <polyline points="10 17 15 12 10 7"></polyline>
+            <line x1="15" y1="12" x2="3" y2="12"></line>
+          </svg>
         </a>
         <a href="/auth/register" class="dock-link" title="Register">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="8.5" cy="7" r="4"></circle>
+            <line x1="20" y1="8" x2="20" y2="14"></line>
+            <line x1="23" y1="11" x2="17" y2="11"></line>
+          </svg>
         </a>
       <% } %>
     </div>
   </div>
 </nav>
+
+<!-- JavaScript to toggle user dropdown smoothly -->
+<script>
+  (function() {
+    const userDropdown = document.getElementById('dockUserDropdown');
+    const userBtn = document.getElementById('dockUserBtn');
+    const userMenu = document.getElementById('dockUserMenu');
+
+    if (userBtn && userMenu) {
+      userBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        userDropdown.classList.toggle('active');
+      });
+
+      document.addEventListener('click', function(e) {
+        if (!userDropdown.contains(e.target)) {
+          userDropdown.classList.remove('active');
+        }
+      });
+    }
+  })();
+</script>

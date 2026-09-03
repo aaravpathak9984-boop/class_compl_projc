@@ -128,25 +128,107 @@ a:hover { color: var(--accent-blue); }
 .admin-dock-link { color: var(--accent-violet); }
 .admin-dock-link:hover { color: #fff; background: rgba(191, 90, 242, 0.4); }
 
-/* Dropdown Up (for dock) */
-.dock-user { position: relative; display: inline-block; }
+/* Dropdown Up (for dock user profile) */
+.dock-user { position: relative; display: inline-flex; align-items: center; }
 .dock-user-btn {
+  background: transparent; border: none;
   display: flex; align-items: center; justify-content: center;
   padding: 10px; cursor: pointer; color: var(--text-secondary);
   border-radius: 50%; transition: all 0.3s var(--ease-standard);
 }
-.dock-user-btn:hover { color: var(--text-primary); background: var(--glass-bg-high); transform: translateY(-3px); }
-.dropdown-content-up {
-  display: none; position: absolute; bottom: 130%; left: 50%; transform: translateX(-50%);
-  min-width: 120px; z-index: 101; padding: 8px 0; border-radius: var(--radius-md);
+.dock-user-btn:hover, .dock-user.active .dock-user-btn { 
+  color: #fff; background: var(--glass-bg-high); transform: translateY(-2px); 
 }
-.dock-user:hover .dropdown-content-up { display: block; animation: slideUpFade 0.3s var(--spring) forwards; }
-.dropdown-content-up a { display: block; padding: 10px 20px; color: var(--text-primary); text-align: center; }
-.dropdown-content-up a:hover { background: var(--glass-bg-high); color: var(--accent-red); }
 
-@keyframes slideUpFade {
-  from { opacity: 0; transform: translate(-50%, 10px); }
-  to { opacity: 1; transform: translate(-50%, 0); }
+.dropdown-content-up {
+  position: absolute;
+  bottom: calc(100% + 16px);
+  left: 50%;
+  transform: translateX(-50%) translateY(8px) scale(0.95);
+  min-width: 190px;
+  background: rgba(18, 18, 26, 0.95);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border: 1px solid var(--glass-border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+  padding: 8px;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: all 0.25s var(--spring);
+  z-index: 2000;
+}
+
+.dock-user:hover .dropdown-content-up,
+.dock-user.active .dropdown-content-up {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0) scale(1);
+}
+
+.user-menu-header {
+  padding: 10px 12px 6px;
+  display: flex;
+  flex-direction: column;
+}
+
+.user-menu-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-menu-role {
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-top: 2px;
+  display: inline-block;
+}
+
+.role-admin { color: var(--accent-violet); }
+.role-user { color: var(--accent-blue); }
+
+.user-menu-divider {
+  height: 1px;
+  background: var(--glass-border);
+  margin: 6px 0;
+}
+
+.user-menu-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 8px 12px;
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+  font-weight: 500;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.user-menu-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.logout-form { margin: 0; padding: 0; }
+
+.logout-btn {
+  color: var(--accent-red) !important;
+}
+
+.logout-btn:hover {
+  background: rgba(255, 69, 58, 0.15) !important;
+  color: #ff6b6b !important;
 }
 
 /* Search Dock */
@@ -205,6 +287,101 @@ select.form-control option { background: var(--bg-base); }
 .checkbox-group { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; }
 .checkbox-label { display: flex; align-items: center; font-size: 0.9rem; cursor: pointer; }
 .checkbox-label input { margin-right: 8px; width: 16px; height: 16px; }
+
+/* Custom Password Strength & Recommendation System */
+.btn-suggest-password {
+  background: transparent;
+  border: none;
+  color: var(--accent-blue);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+.btn-suggest-password:hover {
+  background: rgba(10, 132, 255, 0.15);
+}
+
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrapper .form-control {
+  padding-right: 44px;
+}
+
+.toggle-password-btn {
+  position: absolute;
+  right: 12px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  transition: color 0.2s ease;
+}
+.toggle-password-btn:hover {
+  color: var(--text-primary);
+}
+
+.strength-meter-bar {
+  width: 100%;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.strength-meter-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 3px;
+  transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+.bg-weak { background-color: var(--accent-red); }
+.bg-fair { background-color: #f59e0b; }
+.bg-good { background-color: #38bdf8; }
+.bg-strong { background-color: var(--accent-green); }
+
+.password-checklist {
+  font-size: 0.78rem;
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.checklist-item {
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.2s ease;
+}
+
+.checklist-item .checklist-icon {
+  font-weight: 800;
+  font-size: 0.75rem;
+  color: var(--accent-red);
+}
+
+.checklist-item.passed {
+  color: var(--accent-green);
+}
+
+.checklist-item.passed .checklist-icon {
+  color: var(--accent-green);
+}
 
 /* Toasts */
 .flash-container { position: fixed; top: 40px; left: 50%; transform: translateX(-50%); z-index: 1000; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }

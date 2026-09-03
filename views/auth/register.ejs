@@ -1,26 +1,85 @@
 <div class="form-container glass-panel">
-  <h2>Register</h2>
-  <form action="/auth/register" method="POST">
-    <div class="form-group">
-      <label for="name">Name</label>
-      <input type="text" id="name" name="name" required class="form-control">
+  <!-- Registration Form Card -->
+  <div class="form-header text-center mb-4">
+    <h2>Create an Account</h2>
+    <p class="text-muted" style="font-size: 0.95rem;">Join Cineplex to book movie tickets, leave reviews, and get personalized recommendations.</p>
+  </div>
+
+  <form action="/auth/register" method="POST" id="registerForm">
+    <!-- Full Name Field -->
+    <div class="form-group mb-3">
+      <label for="name">Full Name</label>
+      <input type="text" id="name" name="name" required class="form-control" placeholder="e.g. John Doe">
     </div>
-    <div class="form-group">
-      <label for="email">Email</label>
-      <input type="email" id="email" name="email" required class="form-control">
+
+    <!-- Email Field -->
+    <div class="form-group mb-3">
+      <label for="email">Email Address</label>
+      <input type="email" id="email" name="email" required class="form-control" placeholder="you@example.com">
     </div>
-    <div class="form-group">
-      <label for="password">Password</label>
-      <input type="password" id="password" name="password" required class="form-control">
+
+    <!-- Password Field with Generator & Strength Meter -->
+    <div class="form-group mb-2">
+      <div class="flex-row justify-between align-center mb-1">
+        <label for="password" class="mb-0">Password</label>
+        <!-- Suggest Strong Password Recommendation Button -->
+        <button type="button" class="btn-suggest-password" id="suggestPasswordBtn" title="Auto-generate a strong password">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-1">
+            <path d="M21 2l-2 2m-6 6l-3-3 6-6 3 3-6 6zm-8 8l2.5-2.5m-4.5 4.5l2-2m-3 3l1.5-1.5"></path>
+          </svg>
+          Suggest Strong Password
+        </button>
+      </div>
+
+      <div class="password-input-wrapper">
+        <input type="password" id="password" name="password" required class="form-control" placeholder="Create a secure password">
+        <button type="button" class="toggle-password-btn" id="togglePasswordBtn" title="Show/Hide Password">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Password Strength Indicator Meter -->
+      <div class="password-strength-container mt-2">
+        <div class="strength-meter-bar">
+          <div class="strength-meter-fill" id="strengthBar"></div>
+        </div>
+        <div class="strength-label flex-row justify-between align-center mt-1">
+          <span id="strengthText" class="text-muted" style="font-size: 0.8rem;">Strength: Enter password</span>
+          <span id="strengthScore" style="font-size: 0.8rem; font-weight: 700;"></span>
+        </div>
+      </div>
+
+      <!-- Live Requirement Checklist (Custom Recommendation Rules) -->
+      <div class="password-checklist mt-2 p-2 glass-panel-soft">
+        <div class="checklist-item" id="ruleLength">
+          <span class="checklist-icon">✕</span> At least 8 characters
+        </div>
+        <div class="checklist-item" id="ruleUpper">
+          <span class="checklist-icon">✕</span> At least one uppercase letter (A-Z)
+        </div>
+        <div class="checklist-item" id="ruleNumber">
+          <span class="checklist-icon">✕</span> At least one number (0-9)
+        </div>
+        <div class="checklist-item" id="ruleSpecial">
+          <span class="checklist-icon">✕</span> At least one special symbol (!@#$%^&*)
+        </div>
+      </div>
     </div>
-    <div class="form-group">
+
+    <!-- Confirm Password Field -->
+    <div class="form-group mb-3 mt-3">
       <label for="confirmPassword">Confirm Password</label>
-      <input type="password" id="confirmPassword" name="confirmPassword" required class="form-control">
+      <input type="password" id="confirmPassword" name="confirmPassword" required class="form-control" placeholder="Re-type your password">
+      <small id="passwordMatchMsg" class="form-text" style="display: none; font-size: 0.8rem;"></small>
     </div>
     
-    <div class="form-group">
-      <label>Favorite Genres (Optional)</label>
-      <div class="checkbox-group mt-2">
+    <!-- Favorite Genres -->
+    <div class="form-group mb-4">
+      <label class="mb-2">Favorite Genres (Optional)</label>
+      <div class="checkbox-group">
         <% const genres = ['Action', 'Comedy', 'Drama', 'Sci-Fi', 'Horror', 'Romance', 'Thriller', 'Animation', 'Documentary']; %>
         <% genres.forEach(genre => { %>
           <label class="checkbox-label text-muted">
@@ -31,7 +90,173 @@
       </div>
     </div>
 
-    <button type="submit" class="btn btn-primary w-100 mt-3">Register</button>
+    <!-- Submit Button -->
+    <button type="submit" class="btn btn-primary w-100" id="submitBtn">Register Account</button>
   </form>
-  <p class="mt-4 text-center text-muted">Already have an account? <a href="/auth/login">Login</a></p>
+
+  <p class="mt-4 text-center text-muted">
+    Already have an account? <a href="/auth/login" class="text-accent-blue font-weight-bold">Log in</a>
+  </p>
 </div>
+
+<!-- Password Recommendation & Strength Meter Logic -->
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const passwordInput = document.getElementById('password');
+    const confirmInput = document.getElementById('confirmPassword');
+    const toggleBtn = document.getElementById('togglePasswordBtn');
+    const suggestBtn = document.getElementById('suggestPasswordBtn');
+    const strengthBar = document.getElementById('strengthBar');
+    const strengthText = document.getElementById('strengthText');
+    const matchMsg = document.getElementById('passwordMatchMsg');
+
+    const ruleLength = document.getElementById('ruleLength');
+    const ruleUpper = document.getElementById('ruleUpper');
+    const ruleNumber = document.getElementById('ruleNumber');
+    const ruleSpecial = document.getElementById('ruleSpecial');
+
+    // Toggle password visibility
+    if (toggleBtn) {
+      toggleBtn.addEventListener('click', () => {
+        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        passwordInput.setAttribute('type', type);
+        confirmInput.setAttribute('type', type);
+      });
+    }
+
+    // Evaluate live strength
+    function checkStrength(pwd) {
+      let score = 0;
+
+      // 1. Length >= 8
+      const hasLength = pwd.length >= 8;
+      updateRule(ruleLength, hasLength);
+      if (hasLength) score++;
+
+      // 2. Uppercase letter
+      const hasUpper = /[A-Z]/.test(pwd);
+      updateRule(ruleUpper, hasUpper);
+      if (hasUpper) score++;
+
+      // 3. Number
+      const hasNumber = /[0-9]/.test(pwd);
+      updateRule(ruleNumber, hasNumber);
+      if (hasNumber) score++;
+
+      // 4. Special Character
+      const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pwd);
+      updateRule(ruleSpecial, hasSpecial);
+      if (hasSpecial) score++;
+
+      // Update Bar Fill & Labels
+      if (pwd.length === 0) {
+        strengthBar.style.width = '0%';
+        strengthBar.className = 'strength-meter-fill';
+        strengthText.innerText = 'Strength: Enter password';
+        strengthText.className = 'text-muted';
+      } else if (score <= 1) {
+        strengthBar.style.width = '25%';
+        strengthBar.className = 'strength-meter-fill bg-weak';
+        strengthText.innerText = 'Strength: Weak';
+        strengthText.className = 'text-danger';
+      } else if (score === 2) {
+        strengthBar.style.width = '50%';
+        strengthBar.className = 'strength-meter-fill bg-fair';
+        strengthText.innerText = 'Strength: Fair';
+        strengthText.className = 'text-warning';
+      } else if (score === 3) {
+        strengthBar.style.width = '75%';
+        strengthBar.className = 'strength-meter-fill bg-good';
+        strengthText.innerText = 'Strength: Good';
+        strengthText.className = 'text-info';
+      } else {
+        strengthBar.style.width = '100%';
+        strengthBar.className = 'strength-meter-fill bg-strong';
+        strengthText.innerText = 'Strength: Strong & Secure ✓';
+        strengthText.className = 'text-success';
+      }
+
+      checkMatch();
+    }
+
+    function updateRule(element, passed) {
+      if (!element) return;
+      if (passed) {
+        element.classList.add('passed');
+        element.querySelector('.checklist-icon').innerText = '✓';
+      } else {
+        element.classList.remove('passed');
+        element.querySelector('.checklist-icon').innerText = '✕';
+      }
+    }
+
+    function checkMatch() {
+      if (!confirmInput.value) {
+        matchMsg.style.display = 'none';
+        return;
+      }
+      matchMsg.style.display = 'block';
+      if (passwordInput.value === confirmInput.value) {
+        matchMsg.innerText = '✓ Passwords match';
+        matchMsg.style.color = 'var(--accent-green)';
+      } else {
+        matchMsg.innerText = '✕ Passwords do not match';
+        matchMsg.style.color = 'var(--accent-red)';
+      }
+    }
+
+    if (passwordInput) {
+      passwordInput.addEventListener('input', () => checkStrength(passwordInput.value));
+    }
+    if (confirmInput) {
+      confirmInput.addEventListener('input', checkMatch);
+    }
+
+    // Custom Strong Password Generator
+    if (suggestBtn) {
+      suggestBtn.addEventListener('click', () => {
+        const uppercase = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+        const lowercase = 'abcdefghijkmnopqrstuvwxyz';
+        const numbers = '23456789';
+        const symbols = '!@#$%^&*()_+';
+        const allChars = uppercase + lowercase + numbers + symbols;
+
+        let generated = '';
+        // Guarantee at least one of each category
+        generated += uppercase[Math.floor(Math.random() * uppercase.length)];
+        generated += lowercase[Math.floor(Math.random() * lowercase.length)];
+        generated += numbers[Math.floor(Math.random() * numbers.length)];
+        generated += symbols[Math.floor(Math.random() * symbols.length)];
+
+        // Fill up to 14 characters total
+        for (let i = 4; i < 14; i++) {
+          generated += allChars[Math.floor(Math.random() * allChars.length)];
+        }
+
+        // Shuffle generated characters
+        generated = generated.split('').sort(() => 0.5 - Math.random()).join('');
+
+        // Apply to inputs
+        passwordInput.value = generated;
+        confirmInput.value = generated;
+        passwordInput.setAttribute('type', 'text');
+        confirmInput.setAttribute('type', 'text');
+
+        checkStrength(generated);
+
+        // Copy to clipboard with confirmation
+        navigator.clipboard.writeText(generated).then(() => {
+          suggestBtn.innerText = 'Copied to clipboard! ✓';
+          setTimeout(() => {
+            suggestBtn.innerHTML = `
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-1">
+                <path d="M21 2l-2 2m-6 6l-3-3 6-6 3 3-6 6zm-8 8l2.5-2.5m-4.5 4.5l2-2m-3 3l1.5-1.5"></path>
+              </svg>
+              Suggest Strong Password
+            `;
+          }, 3000);
+        });
+      });
+    }
+  });
+</script>
