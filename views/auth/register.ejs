@@ -1,0 +1,37 @@
+<div class="form-container glass-panel">
+  <h2>Register</h2>
+  <form action="/auth/register" method="POST">
+    <div class="form-group">
+      <label for="name">Name</label>
+      <input type="text" id="name" name="name" required class="form-control">
+    </div>
+    <div class="form-group">
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" required class="form-control">
+    </div>
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" required class="form-control">
+    </div>
+    <div class="form-group">
+      <label for="confirmPassword">Confirm Password</label>
+      <input type="password" id="confirmPassword" name="confirmPassword" required class="form-control">
+    </div>
+    
+    <div class="form-group">
+      <label>Favorite Genres (Optional)</label>
+      <div class="checkbox-group mt-2">
+        <% const genres = ['Action', 'Comedy', 'Drama', 'Sci-Fi', 'Horror', 'Romance', 'Thriller', 'Animation', 'Documentary']; %>
+        <% genres.forEach(genre => { %>
+          <label class="checkbox-label text-muted">
+            <input type="checkbox" name="favoriteGenres" value="<%= genre %>">
+            <%= genre %>
+          </label>
+        <% }) %>
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary w-100 mt-3">Register</button>
+  </form>
+  <p class="mt-4 text-center text-muted">Already have an account? <a href="/auth/login">Login</a></p>
+</div>

@@ -1,0 +1,84 @@
+<div class="admin-dashboard">
+  <h2 class="section-title">Admin Dashboard</h2>
+  
+  <div class="stats-grid mb-5">
+    <div class="stat-card glass-panel" style="border-bottom-color: var(--accent-blue);">
+      <h3>Total Movies</h3>
+      <div class="stat-number"><%= stats.movieCount %></div>
+    </div>
+    <div class="stat-card glass-panel" style="border-bottom-color: var(--accent-violet);">
+      <h3>Total Users</h3>
+      <div class="stat-number"><%= stats.userCount %></div>
+    </div>
+    <div class="stat-card glass-panel" style="border-bottom-color: var(--accent-green);">
+      <h3>Confirmed Bookings</h3>
+      <div class="stat-number"><%= stats.bookingCount %></div>
+    </div>
+    <div class="stat-card glass-panel" style="border-bottom-color: var(--accent-red);">
+      <h3>Total Revenue</h3>
+      <div class="stat-number">$<%= stats.totalRevenue.toFixed(2) %></div>
+    </div>
+  </div>
+
+  <div class="dashboard-sections flex-row gap-4 flex-wrap">
+    <div class="section flex-1 glass-panel p-4">
+      <h3 class="mb-3">Top 5 Movies (By Bookings)</h3>
+      <div class="admin-table-container">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Bookings</th>
+              <th>Rating</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% topMovies.forEach(movie => { %>
+              <tr>
+                <td><a href="/movies/<%= movie._id %>" class="font-weight-bold"><%= movie.title %></a></td>
+                <td><span class="badge badge-success"><%= movie.bookingCount %></span></td>
+                <td><span class="star" style="color: #FFD60A;">★</span> <%= movie.rating.toFixed(1) %></td>
+              </tr>
+            <% }) %>
+            <% if(topMovies.length === 0) { %>
+              <tr><td colspan="3" class="text-muted text-center p-4">No movies yet.</td></tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="section flex-1 glass-panel p-4">
+      <h3 class="mb-3">Recent Bookings</h3>
+      <div class="admin-table-container">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Movie</th>
+              <th>Status</th>
+              <th>Price</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% recentBookings.forEach(booking => { %>
+              <tr>
+                <td><%= booking.user ? booking.user.name : 'Unknown' %></td>
+                <td><%= booking.movie ? booking.movie.title : 'Deleted' %></td>
+                <td>
+                  <span class="badge <%= booking.status === 'confirmed' ? 'badge-success' : 'badge-danger' %>">
+                    <%= booking.status %>
+                  </span>
+                </td>
+                <td class="font-weight-bold">$<%= booking.totalPrice.toFixed(2) %></td>
+              </tr>
+            <% }) %>
+            <% if(recentBookings.length === 0) { %>
+              <tr><td colspan="4" class="text-muted text-center p-4">No bookings yet.</td></tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

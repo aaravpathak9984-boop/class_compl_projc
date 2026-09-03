@@ -1,0 +1,151 @@
+<div class="hero-section">
+  <div class="hero-bg" style="background-image: url('<%= movie.posterUrl || '/images/default-poster.jpg' %>');"></div>
+  
+  <div class="hero-overlay glass-panel-high">
+    <img src="<%= movie.posterUrl || '/images/default-poster.jpg' %>" alt="<%= movie.title %>" class="hero-poster">
+    
+    <div class="hero-info">
+      <h1><%= movie.title %></h1>
+      <p class="hero-meta">
+        <span><%= movie.releaseDate ? movie.releaseDate.getFullYear() : 'Unknown' %></span> • 
+        <span><%= movie.duration %> min</span> • 
+        <span><%= movie.language %></span>
+      </p>
+      <div class="rating mb-4">
+        <span class="star">★</span> <%= movie.rating.toFixed(1) %> <span class="text-muted ml-2" style="font-weight:normal;">(<%= movie.numReviews %> reviews)</span>
+      </div>
+      <div class="movie-genres flex-row gap-2 mb-4 flex-wrap">
+        <% movie.genre.forEach(g => { %>
+          <span class="badge badge-glass"><%= g %></span>
+        <% }) %>
+      </div>
+      <p class="hero-desc"><%= movie.description %></p>
+      
+      <div class="text-muted mb-4" style="font-size: 0.9rem;">
+        <p><strong>Director:</strong> <%= movie.director %></p>
+        <p><strong>Cast:</strong> <%= movie.cast.join(', ') %></p>
+      </div>
+      
+      <% if (currentUser && currentUser.role === 'admin') { %>
+        <div class="flex-row gap-3">
+          <a href="/movies/<%= movie._id %>/edit" class="btn btn-outline">Edit Movie</a>
+          <form action="/movies/<%= movie._id %>?_method=DELETE" method="POST" onsubmit="return confirm('Delete this movie completely?');">
+            <button type="submit" class="btn btn-danger">Delete</button>
+          </form>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<div class="flex-row gap-4 mt-5">
+  <div class="flex-1">
+    <h2 class="section-title">Showtimes & Tickets</h2>
+    <div class="glass-panel p-4">
+      <% if (movie.showtimes && movie.showtimes.length > 0) { %>
+        <div class="showtimes-list">
+          <% movie.showtimes.forEach(show => { %>
+            <div class="showtime-card glass-panel-soft">
+              <div class="time-info">
+                <span class="date"><%= show.date %></span>
+                <span class="time"><%= show.time %></span>
+              </div>
+              <div class="seat-info text-muted">
+                <span><%= show.totalSeats - show.bookedSeats %> / <%= show.totalSeats %> seats left</span>
+              </div>
+              <div class="price-info">
+                $<%= show.price.toFixed(2) %>
+              </div>
+              <div class="action">
+                <a href="/bookings/movies/<%= movie._id %>/book?showtime=<%= show._id %>" class="btn btn-primary <%= (show.totalSeats - show.bookedSeats <= 0) ? 'disabled' : '' %>">
+                  Book Now
+                </a>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      <% } else { %>
+        <p class="text-muted">No showtimes available currently.</p>
+      <% } %>
+      
+      <% if (currentUser && currentUser.role === 'admin') { %>
+        <div class="mt-5 pt-4" style="border-top: 1px solid var(--glass-border);">
+          <h4 class="mb-3 text-accent-violet">Add New Showtime</h4>
+          <form action="/movies/<%= movie._id %>/showtimes" method="POST" class="flex-row gap-2 flex-wrap">
+            <input type="date" name="date" required class="form-control flex-1">
+            <input type="time" name="time" required class="form-control flex-1">
+            <input type="number" name="totalSeats" placeholder="Total Seats" value="100" required class="form-control flex-1">
+            <input type="number" name="price" placeholder="Price ($)" step="0.01" required class="form-control flex-1">
+            <button type="submit" class="btn btn-outline">Add</button>
+          </form>
+        </div>
+      <% } %>
+    </div>
+  </div>
+
+  <div class="flex-1">
+    <h2 class="section-title">Reviews</h2>
+    <div class="glass-panel p-4">
+      <% if (currentUser) { %>
+        <div class="mb-4">
+          <form action="/movies/<%= movie._id %>/reviews" method="POST" class="glass-panel-soft p-3">
+            <div class="form-group flex-row align-center gap-3">
+              <label class="mb-0">Your Rating</label>
+              <select name="rating" required class="form-control w-auto">
+                <option value="5">5 - Excellent</option>
+                <option value="4">4 - Good</option>
+                <option value="3">3 - Average</option>
+                <option value="2">2 - Poor</option>
+                <option value="1">1 - Terrible</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <textarea name="comment" rows="3" class="form-control" placeholder="Write your review here..." required></textarea>
+            </div>
+            <button type="submit" class="btn btn-outline w-100">Submit Review</button>
+          </form>
+        </div>
+      <% } else { %>
+        <div class="glass-panel-soft p-4 text-center mb-4">
+          <p class="text-muted">Please <a href="/auth/login" class="btn btn-primary btn-sm ml-2">Login</a> to leave a review.</p>
+        </div>
+      <% } %>
+
+      <div class="reviews-list">
+        <% if (reviews.length > 0) { %>
+          <% reviews.forEach(review => { %>
+            <div class="review-card glass-panel-soft">
+              <div class="review-header">
+                <strong><%= review.user.name %></strong>
+                <span class="rating"><span class="star">★</span> <%= review.rating %></span>
+              </div>
+              <p class="comment"><%= review.comment %></p>
+              <span class="date-small"><%= new Date(review.createdAt).toLocaleDateString() %></span>
+            </div>
+          <% }) %>
+        <% } else { %>
+          <p class="text-muted text-center py-4">No reviews yet. Be the first!</p>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<% if (moreLikeThis && moreLikeThis.length > 0) { %>
+  <h2 class="section-title mt-5">More Like This</h2>
+  <div class="movie-grid mb-5">
+    <% moreLikeThis.forEach(m => { %>
+      <div class="movie-card glass-panel-soft">
+        <a href="/movies/<%= m._id %>">
+          <img src="<%= m.posterUrl || '/images/default-poster.jpg' %>" alt="<%= m.title %>" class="movie-poster">
+          <div class="movie-info">
+            <h4 class="movie-title"><%= m.title %></h4>
+            <div class="rating">
+              <span class="star">★</span> <%= m.rating.toFixed(1) %>
+            </div>
+          </div>
+        </a>
+      </div>
+    <% }) %>
+  </div>
+<% } %>

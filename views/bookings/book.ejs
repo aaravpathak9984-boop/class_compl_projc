@@ -1,0 +1,85 @@
+<div class="form-container glass-panel">
+  <h2>Book Tickets: <%= movie.title %></h2>
+  
+  <div class="movie-info-small mb-4 text-center">
+    <img src="<%= movie.posterUrl || '/images/default-poster.jpg' %>" alt="<%= movie.title %>" style="max-height: 200px; border-radius: var(--radius-md); box-shadow: var(--shadow-elevated);">
+  </div>
+
+  <form action="/bookings/movies/<%= movie._id %>/book" method="POST">
+    <div class="form-group">
+      <label>Select Showtime</label>
+      <select name="showtimeId" id="showtimeSelect" class="form-control" required>
+        <option value="">-- Choose a time --</option>
+        <% movie.showtimes.forEach(show => { %>
+          <% const available = show.totalSeats - show.bookedSeats; %>
+          <option value="<%= show._id %>" data-available="<%= available %>" data-price="<%= show.price %>" <%= available <= 0 ? 'disabled' : '' %>>
+            <%= show.date %> at <%= show.time %> ($<%= show.price %>) - <%= available %> seats left
+          </option>
+        <% }) %>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Number of Seats</label>
+      <input type="number" name="seats" id="seatsInput" min="1" value="1" required class="form-control" disabled>
+      <small id="seatHelp" class="text-muted mt-2 d-block">Please select a showtime first.</small>
+    </div>
+
+    <div class="booking-summary mt-4 mb-4 p-4 glass-panel-high text-center">
+      <h4 class="mb-0">Total Price: <span class="text-accent-green" style="font-size: 1.5rem;">$<span id="totalPriceDisplay">0.00</span></span></h4>
+    </div>
+
+    <div class="text-right">
+      <a href="/movies/<%= movie._id %>" class="btn btn-outline mr-2">Cancel</a>
+      <button type="submit" id="bookBtn" class="btn btn-primary" disabled>Confirm Booking</button>
+    </div>
+  </form>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const showtimeSelect = document.getElementById('showtimeSelect');
+    const seatsInput = document.getElementById('seatsInput');
+    const totalPriceDisplay = document.getElementById('totalPriceDisplay');
+    const bookBtn = document.getElementById('bookBtn');
+    const seatHelp = document.getElementById('seatHelp');
+
+    function updatePriceAndLimits() {
+      const selectedOption = showtimeSelect.options[showtimeSelect.selectedIndex];
+      if (selectedOption.value) {
+        const available = parseInt(selectedOption.dataset.available);
+        const price = parseFloat(selectedOption.dataset.price);
+        
+        seatsInput.disabled = false;
+        seatsInput.max = available;
+        
+        if (parseInt(seatsInput.value) > available) {
+          seatsInput.value = available;
+        }
+
+        const numSeats = parseInt(seatsInput.value) || 0;
+        totalPriceDisplay.textContent = (numSeats * price).toFixed(2);
+        
+        seatHelp.textContent = `Max ${available} seats available.`;
+        bookBtn.disabled = numSeats < 1 || numSeats > available;
+      } else {
+        seatsInput.disabled = true;
+        seatsInput.value = 1;
+        totalPriceDisplay.textContent = '0.00';
+        seatHelp.textContent = 'Please select a showtime first.';
+        bookBtn.disabled = true;
+      }
+    }
+
+    showtimeSelect.addEventListener('change', updatePriceAndLimits);
+    seatsInput.addEventListener('input', updatePriceAndLimits);
+    
+    // Auto-select if a query param is passed
+    const urlParams = new URLSearchParams(window.location.search);
+    const preselectedShowtime = urlParams.get('showtime');
+    if (preselectedShowtime) {
+      showtimeSelect.value = preselectedShowtime;
+      updatePriceAndLimits();
+    }
+  });
+</script>

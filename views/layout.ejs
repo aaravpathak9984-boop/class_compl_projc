@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - Cineplex</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <!-- Cinematic Global Background -->
+  <div class="global-bg" id="globalBg">
+    <div class="global-bg-overlay"></div>
+  </div>
+
+  <!-- Glass toast messages -->
+  <div class="flash-container">
+    <% if (success_msg && success_msg.length > 0) { %>
+      <div class="alert alert-success glass-panel">
+        <%= success_msg %>
+      </div>
+    <% } %>
+    <% if (error_msg && error_msg.length > 0) { %>
+      <div class="alert alert-danger glass-panel">
+        <%= error_msg %>
+      </div>
+    <% } %>
+  </div>
+
+  <main class="main-content">
+    <%- body %>
+  </main>
+
+  <%- include('partials/header') %>
+  
+  <script src="/js/main.js"></script>
+</body>
+</html>

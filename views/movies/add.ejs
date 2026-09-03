@@ -1,0 +1,71 @@
+<div class="form-container glass-panel" style="max-width: 800px;">
+  <h2><%= title %></h2>
+  <form action="<%= movie ? `/movies/${movie._id}?_method=PUT` : '/movies' %>" method="POST">
+    
+    <div class="form-group">
+      <label>Title</label>
+      <input type="text" name="title" value="<%= movie ? movie.title : '' %>" required class="form-control">
+    </div>
+    
+    <div class="form-group">
+      <label>Description</label>
+      <textarea name="description" rows="4" required class="form-control"><%= movie ? movie.description : '' %></textarea>
+    </div>
+
+    <div class="flex-row gap-3">
+      <div class="form-group flex-1">
+        <label>Language</label>
+        <input type="text" name="language" value="<%= movie ? movie.language : '' %>" required class="form-control">
+      </div>
+      <div class="form-group flex-1">
+        <label>Duration (minutes)</label>
+        <input type="number" name="duration" value="<%= movie ? movie.duration : '' %>" required class="form-control">
+      </div>
+      <div class="form-group flex-1">
+        <label>Release Date</label>
+        <% 
+          let formattedDate = '';
+          if (movie && movie.releaseDate) {
+            formattedDate = movie.releaseDate.toISOString().split('T')[0];
+          }
+        %>
+        <input type="date" name="releaseDate" value="<%= formattedDate %>" class="form-control">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Poster URL</label>
+      <input type="url" name="posterUrl" value="<%= movie ? movie.posterUrl : '' %>" class="form-control">
+    </div>
+
+    <div class="flex-row gap-3">
+      <div class="form-group flex-1">
+        <label>Director</label>
+        <input type="text" name="director" value="<%= movie ? movie.director : '' %>" class="form-control">
+      </div>
+      <div class="form-group flex-1">
+        <label>Cast (comma separated)</label>
+        <input type="text" name="cast" value="<%= movie ? movie.cast.join(', ') : '' %>" class="form-control">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Genres</label>
+      <div class="checkbox-group mt-2">
+        <% const genresList = ['Action', 'Comedy', 'Drama', 'Sci-Fi', 'Horror', 'Romance', 'Thriller', 'Animation', 'Documentary']; %>
+        <% genresList.forEach(genre => { %>
+          <label class="checkbox-label text-muted">
+            <input type="checkbox" name="genre" value="<%= genre %>" 
+              <%= (movie && movie.genre && movie.genre.includes(genre)) ? 'checked' : '' %>>
+            <%= genre %>
+          </label>
+        <% }) %>
+      </div>
+    </div>
+
+    <div class="text-right mt-4 pt-4" style="border-top: 1px solid var(--glass-border);">
+      <a href="/movies" class="btn btn-outline mr-2">Cancel</a>
+      <button type="submit" class="btn btn-primary"><%= movie ? 'Update Movie' : 'Add Movie' %></button>
+    </div>
+  </form>
+</div>

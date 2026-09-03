@@ -1,0 +1,15 @@
+<div class="form-container glass-panel">
+  <h2>Login</h2>
+  <form action="/auth/login" method="POST">
+    <div class="form-group">
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" required class="form-control">
+    </div>
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" required class="form-control">
+    </div>
+    <button type="submit" class="btn btn-primary w-100 mt-3">Login</button>
+  </form>
+  <p class="mt-4 text-center text-muted">Don't have an account? <a href="/auth/register">Register</a></p>
+</div>

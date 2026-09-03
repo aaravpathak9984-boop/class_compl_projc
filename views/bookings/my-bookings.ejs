@@ -1,0 +1,41 @@
+<h2 class="section-title">My Bookings</h2>
+
+<% if (bookings.length > 0) { %>
+  <div class="bookings-list mt-4">
+    <% bookings.forEach(booking => { %>
+      <div class="booking-card glass-panel flex-row gap-4 mb-4">
+        <div class="booking-poster flex-shrink-0">
+          <img src="<%= booking.movie.posterUrl || '/images/default-poster.jpg' %>" alt="Poster">
+        </div>
+        <div class="booking-details flex-1 flex-col justify-between">
+          <div>
+            <h3><a href="/movies/<%= booking.movie._id %>"><%= booking.movie.title %></a></h3>
+            <p class="text-muted mt-2"><strong>Showtime:</strong> <%= booking.date %> at <%= booking.time %></p>
+            <p class="text-muted"><strong>Seats:</strong> <%= booking.seats %></p>
+            <p class="text-muted"><strong>Total Price:</strong> $<%= booking.totalPrice.toFixed(2) %></p>
+          </div>
+          
+          <div class="mt-3">
+            <span class="badge <%= booking.status === 'confirmed' ? 'badge-success' : 'badge-danger' %>">
+              <%= booking.status.toUpperCase() %>
+            </span>
+            <p class="text-muted mt-2" style="font-size: 0.85rem;">Booked on: <%= new Date(booking.createdAt).toLocaleDateString() %></p>
+          </div>
+        </div>
+        
+        <div class="booking-actions flex-col justify-between align-center p-3">
+          <% if (booking.status === 'confirmed') { %>
+            <form action="/bookings/<%= booking._id %>/cancel" method="POST" onsubmit="return confirm('Cancel this booking? This action cannot be undone.');">
+              <button type="submit" class="btn btn-danger btn-sm">Cancel Booking</button>
+            </form>
+          <% } %>
+        </div>
+      </div>
+    <% }) %>
+  </div>
+<% } else { %>
+  <div class="glass-panel p-5 text-center mt-5">
+    <h3 class="mb-3">You have no bookings yet.</h3>
+    <a href="/movies" class="btn btn-primary">Browse Movies</a>
+  </div>
+<% } %>
