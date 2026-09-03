@@ -95,18 +95,9 @@ exports.postRegister = async (req, res) => {
     // 8. Save to MongoDB
     await user.save();
     
-    // 9. Auto-login newly registered user with session and token
-    req.session.user = {
-      id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      favoriteGenres: user.favoriteGenres
-    };
-    req.session.token = token;
-
-    req.flash('success_msg', 'Registration successful! Welcome to Cineplex.');
-    res.redirect('/movies');
+    // Flash explicit confirmation message and redirect to login
+    req.flash('success_msg', 'User registered successfully! Please log in.');
+    res.redirect('/auth/login');
   } catch (err) {
     console.error('Registration Error:', err);
     req.flash('error_msg', 'A server error occurred during registration. Please try again.');
