@@ -38,7 +38,12 @@ const userSchema = new mongoose.Schema({
   // Selected favorite genres for personalized recommendations
   favoriteGenres: [{
     type: String
-  }]
+  }],
+  // Cryptographic session token generated on login and registration
+  token: {
+    type: String,
+    default: null
+  }
 }, {
   // Automatically manage createdAt and updatedAt timestamps
   timestamps: true

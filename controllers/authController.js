@@ -3,9 +3,11 @@
  * Authentication Controller (authController.js)
  * ============================================================================
  * Handles user registration with custom strong-password validation, secure
- * login with Bcrypt credential verification, and clean session teardown.
+ * login with Bcrypt credential verification, cryptographic token generation
+ * for login & signup, and clean session teardown.
  */
 
+const crypto = require('crypto');
 const User = require('../models/User');
 
 /**
@@ -21,14 +23,15 @@ exports.getRegister = (req, res) => {
  * POST /auth/register
  * 
  * - Validates matching passwords
- * - Validates strong password rules:
+ * - Validates strong password recommendations:
  *     * Minimum 8 characters
  *     * At least one uppercase letter (A-Z)
  *     * At least one number (0-9)
  *     * At least one special symbol (!@#$%^&*...)
  * - Normalizes and verifies unique email address
  * - Hashes password using Bcrypt with 10 salt rounds (via User model pre-save hook)
- * - Persists user to MongoDB Atlas
+ * - Generates secure cryptographic authentication token for the session
+ * - Persists user to MongoDB Atlas and auto-authenticates
  */
 exports.postRegister = async (req, res) => {
   const { name, email, password, confirmPassword, favoriteGenres } = req.body;
@@ -76,20 +79,34 @@ exports.postRegister = async (req, res) => {
       ? (Array.isArray(favoriteGenres) ? favoriteGenres : [favoriteGenres]) 
       : [];
 
-    // 6. Create new User document
+    // 6. Generate cryptographic authentication token for this signup
+    const token = crypto.randomBytes(32).toString('hex');
+
+    // 7. Create new User document
     // NOTE: Password is automatically hashed using Bcrypt in User.js pre('save') hook
     const user = new User({
       name: name ? name.trim() : 'Anonymous User',
       email: cleanEmail,
       password: password, // Pre-save hook hashes this with bcrypt
-      favoriteGenres: genresArray
+      favoriteGenres: genresArray,
+      token: token
     });
 
-    // 7. Save to MongoDB
+    // 8. Save to MongoDB
     await user.save();
     
-    req.flash('success_msg', 'Registration successful! You can now log in.');
-    res.redirect('/auth/login');
+    // 9. Auto-login newly registered user with session and token
+    req.session.user = {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      favoriteGenres: user.favoriteGenres
+    };
+    req.session.token = token;
+
+    req.flash('success_msg', 'Registration successful! Welcome to Cineplex.');
+    res.redirect('/movies');
   } catch (err) {
     console.error('Registration Error:', err);
     req.flash('error_msg', 'A server error occurred during registration. Please try again.');
@@ -112,6 +129,7 @@ exports.getLogin = (req, res) => {
  * - Normalizes submitted email
  * - Finds user in MongoDB
  * - Compares plaintext password against Bcrypt hash
+ * - Generates a new cryptographic authentication token on each login
  * - Establishes express session saved in MongoDB (connect-mongo)
  */
 exports.postLogin = async (req, res) => {
@@ -135,7 +153,12 @@ exports.postLogin = async (req, res) => {
       return res.redirect('/auth/login');
     }
 
-    // 4. Create session payload
+    // 4. Generate new cryptographic authentication token for this login session
+    const token = crypto.randomBytes(32).toString('hex');
+    user.token = token;
+    await user.save();
+
+    // 5. Create session payload with token
     req.session.user = {
       id: user._id,
       name: user.name,
@@ -143,6 +166,7 @@ exports.postLogin = async (req, res) => {
       role: user.role,
       favoriteGenres: user.favoriteGenres
     };
+    req.session.token = token;
 
     req.flash('success_msg', `Welcome back, ${user.name}!`);
     res.redirect('/movies');
@@ -157,11 +181,21 @@ exports.postLogin = async (req, res) => {
  * Handle User Logout
  * GET /auth/logout or POST /auth/logout
  * 
+ * - Clears cryptographic token from user database record
  * - Explicitly destroys session record in MongoDB
  * - Clears the session cookie from the user's browser
  * - Redirects to login page with clean state
  */
-exports.logout = (req, res) => {
+exports.logout = async (req, res) => {
+  try {
+    // Clear user token in database upon logout
+    if (req.session && req.session.user) {
+      await User.findByIdAndUpdate(req.session.user.id, { token: null });
+    }
+  } catch (err) {
+    console.error('Error clearing token on logout:', err);
+  }
+
   if (req.session) {
     // 1. Destroy session in MongoDB Atlas store
     req.session.destroy((err) => {

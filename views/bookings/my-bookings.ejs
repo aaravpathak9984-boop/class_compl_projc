@@ -1,41 +1,131 @@
-<h2 class="section-title">My Bookings</h2>
+<!-- ==========================================================================
+     My Bookings View (views/bookings/my-bookings.ejs)
+     Displays user's booked movie tickets in a sleek, compact luxury ticket layout.
+     ========================================================================== -->
+<div class="my-bookings-container">
+  <div class="bookings-header mb-4">
+    <h1 class="section-title">My Bookings</h1>
+    <p class="text-muted">Review your upcoming movie tickets, booking references, and showtimes.</p>
+  </div>
 
-<% if (bookings.length > 0) { %>
-  <div class="bookings-list mt-4">
-    <% bookings.forEach(booking => { %>
-      <div class="booking-card glass-panel flex-row gap-4 mb-4">
-        <div class="booking-poster flex-shrink-0">
-          <img src="<%= booking.movie.posterUrl || '/images/default-poster.jpg' %>" alt="Poster">
-        </div>
-        <div class="booking-details flex-1 flex-col justify-between">
-          <div>
-            <h3><a href="/movies/<%= booking.movie._id %>"><%= booking.movie.title %></a></h3>
-            <p class="text-muted mt-2"><strong>Showtime:</strong> <%= booking.date %> at <%= booking.time %></p>
-            <p class="text-muted"><strong>Seats:</strong> <%= booking.seats %></p>
-            <p class="text-muted"><strong>Total Price:</strong> $<%= booking.totalPrice.toFixed(2) %></p>
+  <% if (bookings && bookings.length > 0) { %>
+    <div class="bookings-grid">
+      <% bookings.forEach(booking => { %>
+        <!-- Movie Ticket Card -->
+        <div class="ticket-card glass-panel">
+          <!-- Ticket Left: Poster Stub -->
+          <div class="ticket-poster-col">
+            <a href="/movies/<%= booking.movie ? booking.movie._id : '#' %>">
+              <img src="<%= (booking.movie && booking.movie.posterUrl) ? booking.movie.posterUrl : '/images/default-poster.jpg' %>" alt="<%= booking.movie ? booking.movie.title : 'Movie' %>" class="ticket-poster-img">
+            </a>
           </div>
-          
-          <div class="mt-3">
-            <span class="badge <%= booking.status === 'confirmed' ? 'badge-success' : 'badge-danger' %>">
-              <%= booking.status.toUpperCase() %>
-            </span>
-            <p class="text-muted mt-2" style="font-size: 0.85rem;">Booked on: <%= new Date(booking.createdAt).toLocaleDateString() %></p>
+
+          <!-- Perforated Ticket Divider -->
+          <div class="ticket-perforation">
+            <span class="notch notch-top"></span>
+            <span class="perforation-line"></span>
+            <span class="notch notch-bottom"></span>
+          </div>
+
+          <!-- Ticket Center: Booking Details -->
+          <div class="ticket-info-col">
+            <div class="ticket-header-row">
+              <h3 class="ticket-movie-title">
+                <a href="/movies/<%= booking.movie ? booking.movie._id : '#' %>">
+                  <%= booking.movie ? booking.movie.title : 'Movie Title' %>
+                </a>
+              </h3>
+              <span class="ticket-status-badge <%= booking.status === 'confirmed' ? 'status-confirmed' : 'status-cancelled' %>">
+                <%= booking.status ? booking.status.toUpperCase() : 'CONFIRMED' %>
+              </span>
+            </div>
+
+            <div class="ticket-details-grid">
+              <div class="ticket-detail-item">
+                <span class="detail-label">Date</span>
+                <span class="detail-value">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-1">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                  </svg>
+                  <%= booking.date %>
+                </span>
+              </div>
+
+              <div class="ticket-detail-item">
+                <span class="detail-label">Time</span>
+                <span class="detail-value">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-1">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                  <%= booking.time %>
+                </span>
+              </div>
+
+              <div class="ticket-detail-item">
+                <span class="detail-label">Seats</span>
+                <span class="detail-value">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-1">
+                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                  </svg>
+                  <%= booking.seats %> <%= booking.seats > 1 ? 'Seats' : 'Seat' %>
+                </span>
+              </div>
+
+              <div class="ticket-detail-item">
+                <span class="detail-label">Total Amount</span>
+                <span class="detail-value ticket-price-highlight">
+                  $<%= booking.totalPrice ? booking.totalPrice.toFixed(2) : '0.00' %>
+                </span>
+              </div>
+            </div>
+
+            <!-- Footer: Reference code & Cancel action -->
+            <div class="ticket-footer-row">
+              <div class="ticket-meta-info">
+                <span class="ticket-code">REF: #<%= booking._id.toString().slice(-6).toUpperCase() %></span>
+                <span class="ticket-date text-muted ml-2">Booked on <%= new Date(booking.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) %></span>
+              </div>
+
+              <div class="ticket-action-col">
+                <% if (booking.status === 'confirmed') { %>
+                  <form action="/bookings/<%= booking._id %>/cancel" method="POST" onsubmit="return confirm('Cancel this booking? This ticket will be permanently voided.');" class="d-inline">
+                    <button type="submit" class="btn-cancel-ticket">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-1">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="15" y1="9" x2="9" y2="15"></line>
+                        <line x1="9" y1="9" x2="15" y2="15"></line>
+                      </svg>
+                      Cancel Booking
+                    </button>
+                  </form>
+                <% } else { %>
+                  <span class="text-danger font-weight-bold" style="font-size: 0.85rem;">Cancelled</span>
+                <% } %>
+              </div>
+            </div>
           </div>
         </div>
-        
-        <div class="booking-actions flex-col justify-between align-center p-3">
-          <% if (booking.status === 'confirmed') { %>
-            <form action="/bookings/<%= booking._id %>/cancel" method="POST" onsubmit="return confirm('Cancel this booking? This action cannot be undone.');">
-              <button type="submit" class="btn btn-danger btn-sm">Cancel Booking</button>
-            </form>
-          <% } %>
-        </div>
+      <% }) %>
+    </div>
+  <% } else { %>
+    <!-- Empty State -->
+    <div class="glass-panel p-5 text-center mt-4 empty-bookings-card">
+      <div class="empty-icon mb-3">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1.5">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+        </svg>
       </div>
-    <% }) %>
-  </div>
-<% } else { %>
-  <div class="glass-panel p-5 text-center mt-5">
-    <h3 class="mb-3">You have no bookings yet.</h3>
-    <a href="/movies" class="btn btn-primary">Browse Movies</a>
-  </div>
-<% } %>
+      <h3 class="mb-2">No Bookings Yet</h3>
+      <p class="text-muted mb-4">You haven't reserved any movie tickets yet. Explore our current catalog and grab your seats!</p>
+      <a href="/movies" class="btn btn-primary">Browse Showing Movies</a>
+    </div>
+  <% } %>
+</div>
