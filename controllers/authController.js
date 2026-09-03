@@ -13,7 +13,8 @@ exports.postRegister = async (req, res) => {
   }
 
   try {
-    let user = await User.findOne({ email });
+    const cleanEmail = email ? email.trim().toLowerCase() : '';
+    let user = await User.findOne({ email: cleanEmail });
     if (user) {
       req.flash('error_msg', 'Email already exists.');
       return res.redirect('/auth/register');
@@ -23,8 +24,8 @@ exports.postRegister = async (req, res) => {
     const genresArray = favoriteGenres ? (Array.isArray(favoriteGenres) ? favoriteGenres : [favoriteGenres]) : [];
 
     user = new User({
-      name,
-      email,
+      name: name ? name.trim() : '',
+      email: cleanEmail,
       password,
       favoriteGenres: genresArray
     });
@@ -46,7 +47,8 @@ exports.getLogin = (req, res) => {
 exports.postLogin = async (req, res) => {
   const { email, password } = req.body;
   try {
-    const user = await User.findOne({ email });
+    const cleanEmail = email ? email.trim().toLowerCase() : '';
+    const user = await User.findOne({ email: cleanEmail });
     if (!user) {
       req.flash('error_msg', 'Invalid credentials.');
       return res.redirect('/auth/login');

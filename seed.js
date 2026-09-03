@@ -85,12 +85,10 @@ const seedDB = async () => {
     await Movie.deleteMany();
     
     // Create admin
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash('admin123', salt);
     const admin = await User.create({
       name: 'Admin User',
       email: 'admin@cineplex.com',
-      password: hashedPassword,
+      password: 'admin123',
       role: 'admin',
       favoriteGenres: ['Action', 'Sci-Fi']
     });
@@ -98,11 +96,10 @@ const seedDB = async () => {
     console.log('Admin user created: admin@cineplex.com / admin123');
 
     // Create a regular user
-    const hashedUserPassword = await bcrypt.hash('user123', salt);
     await User.create({
       name: 'Regular User',
       email: 'user@cineplex.com',
-      password: hashedUserPassword,
+      password: 'user123',
       role: 'user',
       favoriteGenres: ['Drama', 'Romance']
     });
