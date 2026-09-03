@@ -1,15 +1,6 @@
-<!-- Top Right Floating Actions (No full-width bar, No CINEPLEX logo) -->
+<!-- Top Right Floating Action: ONLY Logout button at top when logged in, or Login/Signup when guest -->
 <div class="top-corner-actions">
   <% if (currentUser) { %>
-    <a href="/movies" class="corner-link">Movies</a>
-    <a href="/bookings/my" class="corner-link">My Bookings</a>
-    <% if (currentUser.role === 'admin') { %>
-      <a href="/admin/dashboard" class="corner-link admin-link">Admin</a>
-    <% } %>
-    <span class="corner-user-badge">
-      <span class="corner-avatar"><%= currentUser.name.charAt(0).toUpperCase() %></span>
-      <span class="corner-name"><%= currentUser.name %></span>
-    </span>
     <form action="/auth/logout" method="POST" class="corner-logout-form">
       <button type="submit" class="corner-logout-btn" title="Log Out">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-1">

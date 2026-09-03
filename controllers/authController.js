@@ -36,14 +36,20 @@ exports.getRegister = (req, res) => {
 exports.postRegister = async (req, res) => {
   const { name, email, password, confirmPassword, favoriteGenres } = req.body;
   
-  // 1. Check if passwords match
+  // 1. Enforce that all fields are mandatory
+  if (!name || !name.trim() || !email || !email.trim() || !password || !confirmPassword) {
+    req.flash('error_msg', 'All fields are mandatory. Please fill in all fields.');
+    return res.redirect('/auth/register');
+  }
+
+  // 2. Check if passwords match
   if (password !== confirmPassword) {
     req.flash('error_msg', 'Passwords do not match. Please re-enter.');
     return res.redirect('/auth/register');
   }
 
-  // 2. Validate password length (simple & clean)
-  if (!password || password.length < 6) {
+  // 3. Minimum password length
+  if (password.length < 6) {
     req.flash('error_msg', 'Password must be at least 6 characters long.');
     return res.redirect('/auth/register');
   }

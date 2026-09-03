@@ -9,16 +9,16 @@
     </div>
 
     <form action="/auth/login" method="POST" class="auth-form">
-      <!-- Email -->
+      <!-- Email or Username -->
       <div class="field-group">
-        <label for="email" class="field-label">Email address</label>
-        <input type="email" id="email" name="email" required class="clean-input" placeholder="you@example.com" autocomplete="email">
+        <label for="email" class="field-label">Email or Username <span class="text-danger">*</span></label>
+        <input type="text" id="email" name="email" required class="clean-input" placeholder="e.g. user@example.com" autocomplete="username">
       </div>
 
       <!-- Password -->
       <div class="field-group">
-        <label for="password" class="field-label">Password</label>
-        <input type="password" id="password" name="password" required class="clean-input" placeholder="••••••••" autocomplete="current-password">
+        <label for="password" class="field-label">Password <span class="text-danger">*</span></label>
+        <input type="password" id="password" name="password" required class="clean-input" placeholder="Enter your password" autocomplete="current-password">
       </div>
 
       <!-- Submit Button -->
