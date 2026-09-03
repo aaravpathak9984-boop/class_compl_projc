@@ -64,7 +64,7 @@ const movieSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Create text index for search
-movieSchema.index({ title: 'text', description: 'text', genre: 'text' });
+// Create text index for search with language_override: 'none' to allow any movie language
+movieSchema.index({ title: 'text', description: 'text', genre: 'text' }, { language_override: 'none' });
 
 module.exports = mongoose.model('Movie', movieSchema);

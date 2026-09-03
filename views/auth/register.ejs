@@ -1,29 +1,48 @@
 <!-- ==========================================================================
-     Simple, Clean Register View (views/auth/register.ejs)
+     Register View with Gmail Validation, Password Suggestion & Movie Categories
+     (views/auth/register.ejs)
      ========================================================================== -->
 <div class="auth-wrapper">
   <div class="auth-card">
     <div class="auth-header">
       <h1 class="auth-title">Create Account</h1>
-      <p class="auth-subtitle">Sign up to start booking movie tickets</p>
+      <p class="auth-subtitle">Sign up to book tickets and get personalized movie recommendations</p>
     </div>
 
     <form action="/auth/register" method="POST" id="registerForm" class="auth-form">
       <!-- Full Name -->
       <div class="field-group">
-        <label for="name" class="field-label">Full Name</label>
+        <label for="name" class="field-label">Full Name <span class="text-danger">*</span></label>
         <input type="text" id="name" name="name" required class="clean-input" placeholder="e.g. Aarav Pathak" autocomplete="name">
       </div>
 
-      <!-- Email / Username (No domain restrictions, any email accepted) -->
+      <!-- Gmail Address with validation -->
       <div class="field-group">
-        <label for="email" class="field-label">Email or Username <span class="text-danger">*</span></label>
-        <input type="text" id="email" name="email" required class="clean-input" placeholder="e.g. user@example.com" autocomplete="username">
+        <label for="email" class="field-label">Gmail Address <span class="text-danger">*</span></label>
+        <input 
+          type="email" 
+          id="email" 
+          name="email" 
+          required 
+          class="clean-input" 
+          placeholder="yourname@gmail.com" 
+          autocomplete="email"
+        >
+        <span id="emailValidationMsg" class="field-hint" style="font-size: 0.78rem; display: none;"></span>
       </div>
 
-      <!-- Password -->
+      <!-- Password with Auto-Suggest -->
       <div class="field-group">
-        <label for="password" class="field-label">Password</label>
+        <div class="field-header">
+          <label for="password" class="field-label">Password <span class="text-danger">*</span></label>
+          <button type="button" class="btn-suggest-link" id="suggestPasswordBtn" title="Generate strong random password">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -1px; margin-right: 3px;">
+              <path d="M21 2l-2 2m-6 6l-3-3 6-6 3 3-6 6zm-8 8l2.5-2.5m-4.5 4.5l2-2m-3 3l1.5-1.5"></path>
+            </svg>
+            Suggest Password
+          </button>
+        </div>
+
         <div class="input-with-action">
           <input type="password" id="password" name="password" required class="clean-input" placeholder="At least 6 characters" autocomplete="new-password">
           <button type="button" class="input-action-btn" id="togglePasswordBtn" title="Show/hide password">
@@ -37,14 +56,31 @@
 
       <!-- Confirm Password -->
       <div class="field-group">
-        <label for="confirmPassword" class="field-label">Confirm Password</label>
-        <input type="password" id="confirmPassword" name="confirmPassword" required class="clean-input" placeholder="Re-type your password" autocomplete="new-password">
+        <label for="confirmPassword" class="field-label">Confirm Password <span class="text-danger">*</span></label>
+        <input type="password" id="confirmPassword" name="confirmPassword" required class="clean-input" placeholder="Re-enter password" autocomplete="new-password">
         <span id="matchStatus" class="field-hint"></span>
+      </div>
+
+      <!-- Movie Recommendation Categories (Genres) -->
+      <div class="field-group">
+        <label class="field-label">
+          Favorite Movie Categories
+          <span class="text-muted" style="font-weight: normal; font-size: 0.78rem;">(Used for your movie recommendations)</span>
+        </label>
+        <div class="genre-chips-grid">
+          <% const categories = ['Action', 'Sci-Fi', 'Drama', 'Comedy', 'Thriller', 'Animation', 'Crime', 'Adventure', 'Horror', 'Romance']; %>
+          <% categories.forEach(cat => { %>
+            <label class="genre-chip-item">
+              <input type="checkbox" name="favoriteGenres" value="<%= cat %>">
+              <span class="chip-label"><%= cat %></span>
+            </label>
+          <% }) %>
+        </div>
       </div>
 
       <!-- Submit Button -->
       <button type="submit" class="btn-clean-primary" id="submitBtn">
-        Create Account
+        Create Account & Send Verification
       </button>
     </form>
 
@@ -57,10 +93,39 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', () => {
+    const emailInput = document.getElementById('email');
+    const emailMsg = document.getElementById('emailValidationMsg');
     const passwordInput = document.getElementById('password');
     const confirmInput = document.getElementById('confirmPassword');
     const toggleBtn = document.getElementById('togglePasswordBtn');
+    const suggestBtn = document.getElementById('suggestPasswordBtn');
     const matchStatus = document.getElementById('matchStatus');
+
+    // Live Gmail Check Validation
+    function validateEmail() {
+      const val = emailInput.value.trim().toLowerCase();
+      if (!val) {
+        emailMsg.style.display = 'none';
+        return true;
+      }
+      
+      const isGmail = /^[a-zA-Z0-9._%+-]+@gmail\.com$/.test(val);
+      emailMsg.style.display = 'block';
+
+      if (isGmail) {
+        emailMsg.innerText = '✓ Valid Gmail address';
+        emailMsg.style.color = '#30d158';
+        return true;
+      } else {
+        emailMsg.innerText = '✕ Please enter a valid Gmail ending with @gmail.com (e.g. name@gmail.com)';
+        emailMsg.style.color = '#ff453a';
+        return false;
+      }
+    }
+
+    if (emailInput) {
+      emailInput.addEventListener('input', validateEmail);
+    }
 
     // Toggle password visibility
     if (toggleBtn) {
@@ -71,7 +136,7 @@
       });
     }
 
-    // Check passwords match
+    // Passwords Match Check
     function checkMatch() {
       if (!confirmInput.value) {
         matchStatus.innerText = '';
@@ -86,11 +151,47 @@
       }
     }
 
-    if (confirmInput) {
-      confirmInput.addEventListener('input', checkMatch);
-    }
-    if (passwordInput) {
-      passwordInput.addEventListener('input', checkMatch);
+    if (confirmInput) confirmInput.addEventListener('input', checkMatch);
+    if (passwordInput) passwordInput.addEventListener('input', checkMatch);
+
+    // Auto-Suggest Password Generator
+    if (suggestBtn) {
+      suggestBtn.addEventListener('click', () => {
+        const upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+        const lower = 'abcdefghijkmnopqrstuvwxyz';
+        const digits = '23456789';
+        const special = '@#$%&*!';
+        const all = upper + lower + digits + special;
+
+        let pass = '';
+        pass += upper[Math.floor(Math.random() * upper.length)];
+        pass += lower[Math.floor(Math.random() * lower.length)];
+        pass += digits[Math.floor(Math.random() * digits.length)];
+        pass += special[Math.floor(Math.random() * special.length)];
+
+        for (let i = 4; i < 12; i++) {
+          pass += all[Math.floor(Math.random() * all.length)];
+        }
+        pass = pass.split('').sort(() => 0.5 - Math.random()).join('');
+
+        passwordInput.value = pass;
+        confirmInput.value = pass;
+        passwordInput.setAttribute('type', 'text');
+        confirmInput.setAttribute('type', 'text');
+        checkMatch();
+
+        navigator.clipboard.writeText(pass).then(() => {
+          suggestBtn.innerText = 'Copied to clipboard! ✓';
+          setTimeout(() => {
+            suggestBtn.innerHTML = `
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -1px; margin-right: 3px;">
+                <path d="M21 2l-2 2m-6 6l-3-3 6-6 3 3-6 6zm-8 8l2.5-2.5m-4.5 4.5l2-2m-3 3l1.5-1.5"></path>
+              </svg>
+              Suggest Password
+            `;
+          }, 2500);
+        });
+      });
     }
   });
 </script>

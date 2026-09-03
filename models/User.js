@@ -43,6 +43,19 @@ const userSchema = new mongoose.Schema({
   token: {
     type: String,
     default: null
+  },
+  // Email verification status and security code
+  isVerified: {
+    type: Boolean,
+    default: false
+  },
+  verificationCode: {
+    type: String,
+    default: null
+  },
+  verificationExpires: {
+    type: Date,
+    default: null
   }
 }, {
   // Automatically manage createdAt and updatedAt timestamps

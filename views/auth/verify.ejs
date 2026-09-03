@@ -1,0 +1,55 @@
+<!-- ==========================================================================
+     Account Email Verification View (views/auth/verify.ejs)
+     Allows users to activate their account using a 6-digit security code.
+     ========================================================================== -->
+<div class="auth-wrapper">
+  <div class="auth-card text-center">
+    <div class="auth-header">
+      <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(10, 132, 255, 0.15); color: #0a84ff; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+          <polyline points="22,6 12,13 2,6"></polyline>
+        </svg>
+      </div>
+      <h1 class="auth-title">Verify Email Address</h1>
+      <p class="auth-subtitle" style="margin-bottom: 12px;">
+        Enter the 6-digit code sent to <br>
+        <strong style="color: #ffffff;"><%= email %></strong>
+      </p>
+
+      <% if (previewCode) { %>
+        <div style="background: rgba(48, 209, 88, 0.12); border: 1px solid rgba(48, 209, 88, 0.3); border-radius: 10px; padding: 10px; margin-bottom: 20px; font-size: 0.85rem; color: #30d158;">
+          <span>📨 Security Code: <strong style="font-size: 1.1rem; letter-spacing: 2px;"><%= previewCode %></strong></span>
+        </div>
+      <% } %>
+    </div>
+
+    <form action="/auth/verify" method="POST" class="auth-form">
+      <input type="hidden" name="email" value="<%= email %>">
+
+      <div class="field-group" style="margin-bottom: 24px;">
+        <label for="code" class="field-label" style="text-align: left;">6-Digit Security Code</label>
+        <input 
+          type="text" 
+          id="code" 
+          name="code" 
+          required 
+          maxlength="6" 
+          class="clean-input" 
+          value="<%= previewCode || '' %>"
+          placeholder="••••••" 
+          autocomplete="one-time-code"
+          style="text-align: center; font-size: 1.6rem; letter-spacing: 8px; font-weight: 700; height: 54px;"
+        >
+      </div>
+
+      <button type="submit" class="btn-clean-primary">
+        Verify & Activate Account
+      </button>
+    </form>
+
+    <div class="auth-footer" style="margin-top: 24px;">
+      <a href="/auth/login" class="auth-link">Return to Log In</a>
+    </div>
+  </div>
+</div>

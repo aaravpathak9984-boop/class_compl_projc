@@ -2,16 +2,16 @@
  * ============================================================================
  * Authentication Controller (authController.js)
  * ============================================================================
- * Handles user registration with custom strong-password validation, secure
- * login with Bcrypt credential verification, cryptographic token generation
- * for login & signup, and clean session teardown.
+ * Handles user registration with strict Gmail validation, 6-digit verification
+ * email dispatch, account activation, secure login with Bcrypt, and logout.
  */
 
 const crypto = require('crypto');
 const User = require('../models/User');
+const { sendVerificationEmail } = require('../utils/mailer');
 
 /**
- * Render the Registration View
+ * Render Registration View
  * GET /auth/register
  */
 exports.getRegister = (req, res) => {
@@ -22,73 +22,99 @@ exports.getRegister = (req, res) => {
  * Handle User Registration
  * POST /auth/register
  * 
- * - Validates matching passwords
- * - Validates strong password recommendations:
- *     * Minimum 8 characters
- *     * At least one uppercase letter (A-Z)
- *     * At least one number (0-9)
- *     * At least one special symbol (!@#$%^&*...)
- * - Normalizes and verifies unique email address
- * - Hashes password using Bcrypt with 10 salt rounds (via User model pre-save hook)
- * - Generates secure cryptographic authentication token for the session
- * - Persists user to MongoDB Atlas and auto-authenticates
+ * - Enforces mandatory fields
+ * - Validates strict Gmail address format (@gmail.com)
+ * - Checks matching passwords (min. 6 characters)
+ * - Generates 6-digit verification security code
+ * - Sends verification email via Nodemailer
+ * - Saves user in unverified state (isVerified: false)
+ * - Redirects to /auth/verify
  */
 exports.postRegister = async (req, res) => {
   const { name, email, password, confirmPassword, favoriteGenres } = req.body;
   
-  // 1. Enforce that all fields are mandatory
+  // 1. Mandatory fields check
   if (!name || !name.trim() || !email || !email.trim() || !password || !confirmPassword) {
     req.flash('error_msg', 'All fields are mandatory. Please fill in all fields.');
     return res.redirect('/auth/register');
   }
 
-  // 2. Check if passwords match
+  // 2. Strict Gmail Address Check
+  const cleanEmail = email.trim().toLowerCase();
+  const gmailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/i;
+  if (!gmailRegex.test(cleanEmail)) {
+    req.flash('error_msg', 'Invalid Email: Please enter a valid Gmail address ending with @gmail.com (e.g. yourname@gmail.com).');
+    return res.redirect('/auth/register');
+  }
+
+  // 3. Check passwords match
   if (password !== confirmPassword) {
     req.flash('error_msg', 'Passwords do not match. Please re-enter.');
     return res.redirect('/auth/register');
   }
 
-  // 3. Minimum password length
+  // 4. Minimum password length
   if (password.length < 6) {
     req.flash('error_msg', 'Password must be at least 6 characters long.');
     return res.redirect('/auth/register');
   }
 
   try {
-    // 3. Normalize email: trim whitespaces and lowercase
-    const cleanEmail = email ? email.trim().toLowerCase() : '';
-    
-    // 4. Verify if email is already in use
+    // 5. Verify email uniqueness
     let existingUser = await User.findOne({ email: cleanEmail });
     if (existingUser) {
-      req.flash('error_msg', 'An account with this email already exists.');
+      if (existingUser.isVerified === false) {
+        // Allow re-verification if user previously signed up without verifying
+        const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+        existingUser.verificationCode = verificationCode;
+        existingUser.verificationExpires = new Date(Date.now() + 15 * 60 * 1000);
+        await existingUser.save();
+
+        await sendVerificationEmail(cleanEmail, verificationCode);
+        req.session.pendingVerification = { email: cleanEmail, code: verificationCode };
+
+        req.flash('error_msg', 'Account already exists but is not verified. A new verification code has been sent!');
+        return res.redirect(`/auth/verify?email=${encodeURIComponent(cleanEmail)}`);
+      }
+      req.flash('error_msg', 'An account with this Gmail address already exists.');
       return res.redirect('/auth/register');
     }
 
-    // 5. Format favorite genres array
+    // 6. Format favorite genres array for recommendation engine
     const genresArray = favoriteGenres 
       ? (Array.isArray(favoriteGenres) ? favoriteGenres : [favoriteGenres]) 
       : [];
 
-    // 6. Generate cryptographic authentication token for this signup
-    const token = crypto.randomBytes(32).toString('hex');
+    // 7. Generate 6-digit verification code & session token
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const verificationExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
+    const sessionToken = crypto.randomBytes(32).toString('hex');
 
-    // 7. Create new User document
-    // NOTE: Password is automatically hashed using Bcrypt in User.js pre('save') hook
+    // 8. Create new User document with isVerified: false
     const user = new User({
-      name: name ? name.trim() : 'Anonymous User',
+      name: name.trim(),
       email: cleanEmail,
       password: password, // Pre-save hook hashes this with bcrypt
       favoriteGenres: genresArray,
-      token: token
+      token: sessionToken,
+      isVerified: false,
+      verificationCode: verificationCode,
+      verificationExpires: verificationExpires
     });
 
-    // 8. Save to MongoDB
     await user.save();
-    
-    // Flash explicit confirmation message and redirect to login
-    req.flash('success_msg', 'User registered successfully! Please log in.');
-    res.redirect('/auth/login');
+
+    // 9. Dispatch verification email via Nodemailer
+    await sendVerificationEmail(cleanEmail, verificationCode);
+
+    // Save pending info to session for instant preview helper
+    req.session.pendingVerification = {
+      email: cleanEmail,
+      code: verificationCode
+    };
+
+    req.flash('success_msg', 'Verification code sent to your Gmail! Please enter your 6-digit code below.');
+    res.redirect(`/auth/verify?email=${encodeURIComponent(cleanEmail)}`);
   } catch (err) {
     console.error('Registration Error:', err);
     req.flash('error_msg', 'A server error occurred during registration. Please try again.');
@@ -97,7 +123,73 @@ exports.postRegister = async (req, res) => {
 };
 
 /**
- * Render the Login View
+ * Render Email Verification View
+ * GET /auth/verify
+ */
+exports.getVerify = async (req, res) => {
+  const pending = req.session.pendingVerification || {};
+  const email = req.query.email || pending.email || '';
+  const previewCode = (pending.email === email && pending.code) ? pending.code : '';
+
+  res.render('auth/verify', {
+    title: 'Verify Account',
+    email,
+    previewCode
+  });
+};
+
+/**
+ * Handle Verification Submission
+ * POST /auth/verify
+ */
+exports.postVerify = async (req, res) => {
+  const { email, code } = req.body;
+  const cleanEmail = email ? email.trim().toLowerCase() : '';
+  const cleanCode = code ? code.trim() : '';
+
+  try {
+    const user = await User.findOne({ email: cleanEmail });
+    if (!user) {
+      req.flash('error_msg', 'No account found with this email address.');
+      return res.redirect('/auth/register');
+    }
+
+    if (user.isVerified) {
+      req.flash('success_msg', 'Account is already verified. Please log in.');
+      return res.redirect('/auth/login');
+    }
+
+    // Check code match
+    if (!user.verificationCode || user.verificationCode !== cleanCode) {
+      req.flash('error_msg', 'Invalid verification code. Please check your email and try again.');
+      return res.redirect(`/auth/verify?email=${encodeURIComponent(cleanEmail)}`);
+    }
+
+    // Check expiration
+    if (user.verificationExpires && new Date() > user.verificationExpires) {
+      req.flash('error_msg', 'Verification code has expired. Please request a new one.');
+      return res.redirect(`/auth/verify?email=${encodeURIComponent(cleanEmail)}`);
+    }
+
+    // Activate user account
+    user.isVerified = true;
+    user.verificationCode = null;
+    user.verificationExpires = null;
+    await user.save();
+
+    delete req.session.pendingVerification;
+
+    req.flash('success_msg', 'User registered and verified successfully! Please log in.');
+    res.redirect('/auth/login');
+  } catch (err) {
+    console.error('Verification Error:', err);
+    req.flash('error_msg', 'Error verifying account. Please try again.');
+    res.redirect('/auth/login');
+  }
+};
+
+/**
+ * Render Login View
  * GET /auth/login
  */
 exports.getLogin = (req, res) => {
@@ -105,42 +197,51 @@ exports.getLogin = (req, res) => {
 };
 
 /**
- * Handle User Login
+ * Handle Login
  * POST /auth/login
- * 
- * - Normalizes submitted email
- * - Finds user in MongoDB
- * - Compares plaintext password against Bcrypt hash
- * - Generates a new cryptographic authentication token on each login
- * - Establishes express session saved in MongoDB (connect-mongo)
  */
 exports.postLogin = async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    // 1. Clean email input
-    const cleanEmail = email ? email.trim().toLowerCase() : '';
-    
-    // 2. Query user by email
+    if (!email || !email.trim() || !password) {
+      req.flash('error_msg', 'All fields are mandatory. Please enter both email and password.');
+      return res.redirect('/auth/login');
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
     const user = await User.findOne({ email: cleanEmail });
     if (!user) {
       req.flash('error_msg', 'Invalid email or password.');
       return res.redirect('/auth/login');
     }
 
-    // 3. Check password using bcrypt.compare
+    // Check password
     const isMatch = await user.matchPassword(password);
     if (!isMatch) {
       req.flash('error_msg', 'Invalid email or password.');
       return res.redirect('/auth/login');
     }
 
-    // 4. Generate new cryptographic authentication token for this login session
+    // Check if account has completed email verification
+    if (user.isVerified === false) {
+      const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+      user.verificationCode = verificationCode;
+      user.verificationExpires = new Date(Date.now() + 15 * 60 * 1000);
+      await user.save();
+
+      await sendVerificationEmail(cleanEmail, verificationCode);
+      req.session.pendingVerification = { email: cleanEmail, code: verificationCode };
+
+      req.flash('error_msg', 'Please verify your Gmail address to activate your account.');
+      return res.redirect(`/auth/verify?email=${encodeURIComponent(cleanEmail)}`);
+    }
+
+    // Generate fresh session token
     const token = crypto.randomBytes(32).toString('hex');
     user.token = token;
     await user.save();
 
-    // 5. Create session payload with token
     req.session.user = {
       id: user._id,
       name: user.name,
@@ -160,17 +261,11 @@ exports.postLogin = async (req, res) => {
 };
 
 /**
- * Handle User Logout
+ * Handle Logout
  * GET /auth/logout or POST /auth/logout
- * 
- * - Clears cryptographic token from user database record
- * - Explicitly destroys session record in MongoDB
- * - Clears the session cookie from the user's browser
- * - Redirects to login page with clean state
  */
 exports.logout = async (req, res) => {
   try {
-    // Clear user token in database upon logout
     if (req.session && req.session.user) {
       await User.findByIdAndUpdate(req.session.user.id, { token: null });
     }
@@ -179,15 +274,10 @@ exports.logout = async (req, res) => {
   }
 
   if (req.session) {
-    // 1. Destroy session in MongoDB Atlas store
     req.session.destroy((err) => {
-      if (err) {
-        console.error('Error destroying session:', err);
-      }
-      // 2. Clear connect.sid cookie from browser
+      if (err) console.error('Session destruction error:', err);
       res.clearCookie('connect.sid', { path: '/' });
-      // 3. Redirect to login view
-      return res.redirect('/auth/login');
+      res.redirect('/auth/login');
     });
   } else {
     res.clearCookie('connect.sid', { path: '/' });
